@@ -26,12 +26,10 @@ class Seq {  // kseq_t
     size_type max_seq_size;
     vector<size_type> string_breaks;
     string seq;
-    size_type qual_size = 0;
 
     inline void clear() {
-      string_breaks.resize(0);
-      seq.resize(0);
-      qual_size = 0;
+      string_breaks.clear();
+      seq.clear();
     }
 };
 
@@ -61,6 +59,7 @@ class KStream {  // kstream_t
     bool is_ready; /**< @brief next record ready flag */
     bool finished_reading_seq; /**< @brief Sequence is done reading */
     bool has_read_something; /**< @brief Current seq contains something */
+    size_type qual_size; /**< @brief quality string size */
     TFile f; /**< @brief file handler */
     TFunc func; /**< @brief read function */
     close_type close; /**< @brief close function */
@@ -79,6 +78,7 @@ class KStream {  // kstream_t
         close(cfunc_) {
       this->begin = 0;
       this->buf_end = 0;
+      this->qual_size = 0;
       this->is_eof = false;
       this->is_tqs = false;
       this->is_ready = false;
@@ -98,6 +98,7 @@ class KStream {  // kstream_t
       this->bufsize = other.bufsize;
       this->begin = other.begin;
       this->buf_end = other.buf_end;
+      this->qual_size = other.qual_size;
       this->is_eof = other.is_eof;
       this->is_tqs = other.is_tqs;
       this->is_ready = other.is_ready;
@@ -116,6 +117,7 @@ class KStream {  // kstream_t
       this->bufsize = other.bufsize;
       this->begin = other.begin;
       this->buf_end = other.buf_end;
+      this->qual_size = other.qual_size;
       this->is_eof = other.is_eof;
       this->is_tqs = other.is_tqs;
       this->is_ready = other.is_ready;
@@ -200,15 +202,15 @@ class KStream {  // kstream_t
           this->is_tqs = true;
           return *this;
         }
-        while (this->getuntil(SEP::LINE, nullptr, nullptr, &rec.qual_size)
-               && rec.qual_size < this->current_seq_size) {}
+        while (this->getuntil(SEP::LINE, nullptr, nullptr, &this->qual_size)
+               && this->qual_size < this->current_seq_size) {}
         if (this->err()) return *this;
         this->is_ready = false;  // we have not come to the next header line
-        if (this->current_seq_size != rec.qual_size) {
+        if (this->current_seq_size != this->qual_size) {
           this->is_tqs = true;  // error: qual string is of a different length
           return *this;
         }
-        rec.qual_size = 0;
+        this->qual_size = 0;
         if (this->eof()) { return *this; }
       }
     }
