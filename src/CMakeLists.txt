@@ -1,5 +1,6 @@
-
-project(test)
+project(kseqpp_read)
+include_directories(${PROJECT_SOURCE_DIR}/kseqpp_read)
+message(${PROJECT_SOURCE_DIR}/kseqpp_read)
 
 # Builds the testing program. We use googletest as a testing framework
 set(KSEQPP_READ_BUILD_TESTS OFF BOOL)
