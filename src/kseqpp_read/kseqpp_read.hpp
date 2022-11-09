@@ -59,7 +59,6 @@ class KStream {  // kstream_t
     bool is_eof; /**< @brief eof flag */
     bool is_tqs; /**< @brief truncated quality string flag */
     bool is_ready; /**< @brief next record ready flag */
-    bool last; /**< @brief last read was successful */
     bool finished_reading_seq; /**< @brief Sequence is done reading */
     bool has_read_something; /**< @brief Current seq contains something */
     TFile f; /**< @brief file handler */
@@ -83,7 +82,6 @@ class KStream {  // kstream_t
       this->is_eof = false;
       this->is_tqs = false;
       this->is_ready = false;
-      this->last = false;
       this->finished_reading_seq = true;
       this->current_seq_size = 0;
     }
@@ -103,7 +101,6 @@ class KStream {  // kstream_t
       this->is_eof = other.is_eof;
       this->is_tqs = other.is_tqs;
       this->is_ready = other.is_ready;
-      this->last = other.last;
       this->f = std::move(other.f);
       this->func = std::move(other.func);
       this->close = other.close;
@@ -122,7 +119,6 @@ class KStream {  // kstream_t
       this->is_eof = other.is_eof;
       this->is_tqs = other.is_tqs;
       this->is_ready = other.is_ready;
-      this->last = other.last;
       this->f = std::move(other.f);
       this->func = std::move(other.func);
       this->close = other.close;
@@ -148,7 +144,7 @@ class KStream {  // kstream_t
 
     inline bool fail() const {
       return this->err() || this->tqs()
-          || (this->eof() && !this->last && !has_read_something);
+          || (this->eof() && !has_read_something);
     }
 
     inline KStream &operator>>(Seq &rec) {
@@ -156,7 +152,6 @@ class KStream {  // kstream_t
       this->has_read_something = false;
       while (true) {
         if (this->finished_reading_seq) {
-          this->last = false;
           this->current_seq_size = 0;
           this->finished_reading_seq = false;
           if (!this->is_ready) {  // then jump to the next header line
@@ -193,7 +188,6 @@ class KStream {  // kstream_t
           ++this->current_seq_size;
           return *this;
         }
-        this->last = true;
         // the first header character has been read
         if (c == '>' || c == '@') this->is_ready = true;
 
