@@ -55,7 +55,7 @@ To run the benchmarks, it is recommended to download this repository and run `./
 Unfortunately, as a result to make it more scalable, more checks need to be made and thus performance takes a small hit when compared to the original kseqpp. This was one benchmark which was made using the AMD Rome 7H12 CPU and a 3.8TB NVME drive.
 
 ```
-FASTQ fasta iteration 1: 4910ms
+reklibpp fasta iteration 1: 4910ms
 reklibpp fasta iteration 2: 4781ms
 reklibpp fasta iteration 3: 4775ms
 reklibpp fasta iteration 4: 4776ms
