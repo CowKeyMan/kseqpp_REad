@@ -77,7 +77,7 @@ auto benchmark_klibpp_fasta() -> void {
       while (ssi >> record) {}
     })
     if (i > 0) {
-      cout << "klibpp fastq iteration " << i << ": " << TIME_IT_TOTAL << "ms"
+      cout << "klibpp fasta iteration " << i << ": " << TIME_IT_TOTAL << "ms"
            << endl;
       total += double(TIME_IT_TOTAL) / iterations;
     }
