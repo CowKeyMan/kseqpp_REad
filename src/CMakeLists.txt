@@ -1,12 +1,14 @@
 project(reklibpp)
+
+find_package(ZLIB)
 add_library(kseqpp_read INTERFACE)
 target_include_directories(kseqpp_read INTERFACE ${PROJECT_SOURCE_DIR}/kseqpp_read)
+target_link_libraries(kseqpp_read INTERFACE ZLIB::ZLIB)
 
 # Builds the testing program. We use googletest as a testing framework
 option(KSEQPP_READ_BUILD_TESTS "Build the benchmarks" OFF)
 if (KSEQPP_READ_BUILD_TESTS)
   include(FetchContent)
-  find_package(ZLIB)
   FetchContent_Declare(
     googletest
     QUIET
@@ -29,14 +31,13 @@ if (KSEQPP_READ_BUILD_TESTS)
     test
     "${PROJECT_SOURCE_DIR}/test.cpp"
   )
-  target_link_libraries(test kseqpp_read ZLIB::ZLIB test_lib)
+  target_link_libraries(test kseqpp_read test_lib)
   add_test(NAME test COMMAND test)
 endif() # BUILD_TESTS
 
 option(KSEQPP_READ_BUILD_BENCHMARKS "Build the benchmarks" OFF)
 if (KSEQPP_READ_BUILD_BENCHMARKS)
   include(ExternalProject)
-  find_package(ZLIB)
   if(EXISTS "${CMAKE_BINARY_DIR}/external/kseqpp/lib/pkgconfig/kseq++.pc")
     set(KSEQPP_FOUND TRUE)
   else()
@@ -61,5 +62,5 @@ if (KSEQPP_READ_BUILD_BENCHMARKS)
   if(NOT KSEQPP_FOUND)
     add_dependencies(benchmark kseqpp)
   endif()
-  target_link_libraries(benchmark kseqpp_read ZLIB::ZLIB)
+  target_link_libraries(benchmark kseqpp_read)
 endif()

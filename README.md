@@ -25,13 +25,13 @@ FetchContent_Declare(
   reklibpp
   QUIET
   GIT_REPOSITORY       "https://github.com/CowKeyMan/kseqpp_REad"
-  GIT_TAG              "v1.0.0"
+  GIT_TAG              "v1.0.1"
   GIT_SHALLOW          TRUE
 )
 FetchContent_MakeAvailable(reklibpp)
 
 add_executable(main main.cpp)
-target_link_libraries(main kseqpp_read ZLIB::ZLIB)
+target_link_libraries(main kseqpp_read)
 ```
 
 ## Usage
