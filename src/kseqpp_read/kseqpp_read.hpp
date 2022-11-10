@@ -194,7 +194,7 @@ class KStream {  // kstream_t
         if (c == '>' || c == '@') this->is_ready = true;
 
         // Read + line if FASTQ
-        if (c != '+') return *this;  // FASTA
+        if (c != '+') continue;  // FASTA
         while ((c = this->getc()) && c != '\n') {}  // skip the rest of '+' line
 
         // Read Quality string line
