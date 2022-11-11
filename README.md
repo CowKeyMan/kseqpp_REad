@@ -25,7 +25,7 @@ FetchContent_Declare(
   reklibpp
   QUIET
   GIT_REPOSITORY       "https://github.com/CowKeyMan/kseqpp_REad"
-  GIT_TAG              "v1.0.1"
+  GIT_TAG              "v1.0.0"
   GIT_SHALLOW          TRUE
 )
 FetchContent_MakeAvailable(reklibpp)
@@ -55,33 +55,33 @@ To run the benchmarks, it is recommended to download this repository and run `./
 Unfortunately, as a result to make it more scalable, more checks need to be made and thus performance takes a small hit when compared to the original kseqpp. This was one benchmark which was made using the AMD Rome 7H12 CPU and a 3.8TB NVME drive.
 
 ```
-reklibpp fasta iteration 1: 4910ms
-reklibpp fasta iteration 2: 4781ms
-reklibpp fasta iteration 3: 4775ms
-reklibpp fasta iteration 4: 4776ms
-reklibpp fasta iteration 5: 4785ms
-Average: 4805.4ms
+reklibpp fasta iteration 1: 2956ms
+reklibpp fasta iteration 2: 2842ms
+reklibpp fasta iteration 3: 2835ms
+reklibpp fasta iteration 4: 2835ms
+reklibpp fasta iteration 5: 2836ms
+Average: 2860.8ms
 
-reklibpp fastq iteration 1: 8197ms
-reklibpp fastq iteration 2: 7975ms
-reklibpp fastq iteration 3: 7953ms
-reklibpp fastq iteration 4: 7938ms
-reklibpp fastq iteration 5: 7937ms
-Average: 8000ms
+reklibpp fastq iteration 1: 7429ms
+reklibpp fastq iteration 2: 7182ms
+reklibpp fastq iteration 3: 7170ms
+reklibpp fastq iteration 4: 7150ms
+reklibpp fastq iteration 5: 7141ms
+Average: 7214.4ms
 
-klibpp fasta iteration 1: 2976ms
-klibpp fasta iteration 2: 3161ms
-klibpp fasta iteration 3: 3067ms
-klibpp fasta iteration 4: 3071ms
-klibpp fasta iteration 5: 3126ms
-Average: 3080.2ms
+klibpp fasta iteration 1: 3023ms
+klibpp fasta iteration 2: 3091ms
+klibpp fasta iteration 3: 2942ms
+klibpp fasta iteration 4: 2925ms
+klibpp fasta iteration 5: 3162ms
+Average: 3028.6ms
 
-klibpp fastq iteration 1: 6796ms
-klibpp fastq iteration 2: 6773ms
-klibpp fastq iteration 3: 6765ms
-klibpp fastq iteration 4: 6752ms
-klibpp fastq iteration 5: 6756ms
-Average: 6768.4ms
+klibpp fastq iteration 1: 6756ms
+klibpp fastq iteration 2: 6733ms
+klibpp fastq iteration 3: 6746ms
+klibpp fastq iteration 4: 6738ms
+klibpp fastq iteration 5: 6732ms
+Average: 6741ms
 ```
 
 ## Test
