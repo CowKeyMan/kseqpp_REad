@@ -94,7 +94,6 @@ class KStream {  // kstream_t
         close_func(close_func_) {
       this->buf_begin = 0;
       this->buf_end = 0;
-      this->qual_size = 0;
       this->is_eof = false;
       this->is_tqs = false;
       this->first_header_char_read = false;
@@ -120,7 +119,6 @@ class KStream {  // kstream_t
       this->bufsize = other.bufsize;
       this->buf_begin = other.buf_begin;
       this->buf_end = other.buf_end;
-      this->qual_size = other.qual_size;
       this->is_eof = other.is_eof;
       this->is_tqs = other.is_tqs;
       this->first_header_char_read = other.first_header_char_read;
@@ -140,7 +138,6 @@ class KStream {  // kstream_t
       this->bufsize = other.bufsize;
       this->buf_begin = other.buf_begin;
       this->buf_end = other.buf_end;
-      this->qual_size = other.qual_size;
       this->is_eof = other.is_eof;
       this->is_tqs = other.is_tqs;
       this->first_header_char_read = other.first_header_char_read;
@@ -177,14 +174,13 @@ class KStream {  // kstream_t
       this->has_read_something = false;
       while (true) {
         if (this->finished_reading_seq) { this->read_header(); }
-        if (this->fail()) { return *this; }
+        if (this->fail() || this->eof()) { return *this; }
 
-        if (read_sequence(rec)) { break; }
+        if (read_sequence(rec, c)) { break; }
         if (this->eof()) { return *this; }
 
         // Read + line if FASTQ
         if (c != '+') continue;  // FASTA if no +
-        this->skip_to_next_line();
 
         // Read Quality string line
         this->read_quality_string();
@@ -196,7 +192,7 @@ class KStream {  // kstream_t
       return *this;
     }
 
-    inline bool read_sequence(Seq &rec) {
+    inline bool read_sequence(Seq &rec, char &last_char) {
       char c;
       size_t previous_length = rec.seq.size();
       while (c = this->next_char ? next_char : this->getc()) {
@@ -208,6 +204,7 @@ class KStream {  // kstream_t
         }
         if (rec.seq.size() == rec.max_seq_size) {
           this->next_char = c;
+          this->current_seq_size += rec.seq.size() - previous_length;
           return true;
         } else {
           rec.seq += c;
@@ -221,6 +218,7 @@ class KStream {  // kstream_t
       this->current_seq_size += rec.seq.size() - previous_length;
       this->first_header_char_read = is_ready_char(c);
       this->finished_reading_seq = is_ready_char(c) || c == '+' || this->eof();
+      last_char = c;
       if (this->finished_reading_seq) {
         rec.string_breaks.push_back(rec.seq.size() - 1);
       }
@@ -229,7 +227,6 @@ class KStream {  // kstream_t
 
     inline void read_header() {
       char last_char;
-      this->current_seq_size = 0;
       this->finished_reading_seq = false;
       if (!this->first_header_char_read) {
         this->read_until_next_ready_char();
@@ -238,6 +235,7 @@ class KStream {  // kstream_t
       }
       if (!this->read_name(last_char)) return;
       if (last_char != '\n') { this->read_comment(); }
+      this->current_seq_size = 0;
     }
 
     inline void read_until_next_ready_char() {
@@ -265,11 +263,11 @@ class KStream {  // kstream_t
         this->is_tqs = true;
         return;
       }
-      size_t qual_size;
-      while (this->getuntil(SEP::LINE, nullptr, nullptr, &qual_size)
-             && this->qual_size < this->current_seq_size) {}
+      size_t qual_size = 0;
+      while (qual_size < this->current_seq_size
+             && this->getuntil(SEP::LINE, nullptr, nullptr, &qual_size)) {}
       if (this->err()) { return; }
-      if (this->current_seq_size != this->qual_size) { this->is_tqs = true; }
+      if (this->current_seq_size != qual_size) { this->is_tqs = true; }
     }
 
     operator bool() const { return !this->fail(); }

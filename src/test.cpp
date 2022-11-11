@@ -1,9 +1,3 @@
-#include <iostream>
-using std::cerr;
-using std::cout;
-using std::endl;
-
-#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -135,19 +129,20 @@ TEST(TestFASTA, BiggestBufferFASTA) {
   ASSERT_EQ(get_seqs(fasta_file, 9999), full_expected);
 }
 
-TEST(TestFASTQ, HalfBufferFASTQ) {
-  KseqppFullReader(fastq_file, 18).assert_correct();
-  ASSERT_EQ(get_seqs(fastq_file, 44), half_expected);
+TEST(TestFASTQ, SmallBufferFASTQ) {
+  KseqppFullReader(fastq_file, 16).assert_correct();
+  ASSERT_EQ(get_seqs(fastq_file, 16), small_expected);
 }
 
-TEST(TestFASTQ, SmallBufferFASTQ) {
-  KseqppFullReader(fastq_file, 30).assert_correct();
-  ASSERT_EQ(get_seqs(fastq_file, 44), small_expected);
+TEST(TestFASTQ, HalfBufferFASTQ) {
+  KseqppFullReader(fastq_file, 18).assert_correct();
+  ASSERT_EQ(get_seqs(fastq_file, 18), half_expected);
 }
+
 
 TEST(TestFASTQ, EqualBufferFASTQ) {
   KseqppFullReader(fastq_file, 36).assert_correct();
-  ASSERT_EQ(get_seqs(fastq_file, 44), equal_expected);
+  ASSERT_EQ(get_seqs(fastq_file, 36), equal_expected);
 }
 
 TEST(TestFASTQ, BigBufferFASTQ) {
