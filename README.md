@@ -1,5 +1,5 @@
 # kseqpp_REad
-A rewrite of kseqpp to only read sequences, and only read until a certain amount of characters, making it more scalable
+A rewrite of kseqpp to only read sequences, and only read until a certain amount of characters, making it more scalable. Original kseqpp_REad can be found here: https://github.com/cartoonist/kseqpp
 
 ## Introduction
 
@@ -83,6 +83,8 @@ klibpp fastq iteration 4: 6738ms
 klibpp fastq iteration 5: 6732ms
 Average: 6741ms
 ```
+
+The advantage of this implementation is that the strings read will be sequential in memory, which means that it can easily be transferred to the gpu, or parallelised in some form or another. Processing in general becomes easier.
 
 ## Test
 
