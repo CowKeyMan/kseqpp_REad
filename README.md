@@ -5,11 +5,11 @@ A rewrite of kseqpp to only read sequences, and only read until a certain amount
 
 This implementation of kseqpp works by setting a maximum for the number of maximum characters that can be read from the filestream at one time. Thus, each Seq will contain as many characters as specified or less (in the case of the last read sequences).
 
-Since it would not be possible to tell where one sequence starts and when does the next one end, the vector of positive numbers 'string_breaks' contain the indexes of the last character for each sequence within the 'seq' string.
+Since it would not be possible to tell where one sequence starts and when does the next one end, the vector of positive numbers 'chars_before_newline' contain the indexes of the last character for each sequence within the 'seq' string.
 
 So for example:
-* given the seq 'ABCDEFG' and string_breaks [2, 6], we would have 2 strings which are 'ABC' and 'DEFG'
-* given the seq 'ABCDEFG' and string breaks [0, 3], we would have 3 strings which are 'A', 'BCD' and 'EFG', where the final string (EFG) will continue when we continue reading from the file.
+* given the seq 'ABCDEFG' and chars_before_newline [3, 7], we would have 2 strings which are 'ABC' and 'DEFG'
+* given the seq 'ABCDEFG' and chars_before_newline [1, 1, 4], we would have 3 strings which are 'A', 'BCD' and 'EFG', where the final string (EFG) will continue when we continue reading from the file.
 
 I have also stripped everything else unrelated to reading the sequences. Error checking has been left as is.
 
@@ -25,7 +25,7 @@ FetchContent_Declare(
   reklibpp
   QUIET
   GIT_REPOSITORY       "https://github.com/CowKeyMan/kseqpp_REad"
-  GIT_TAG              "v1.0.0"
+  GIT_TAG              "v1.1.0"
   GIT_SHALLOW          TRUE
 )
 FetchContent_MakeAvailable(reklibpp)

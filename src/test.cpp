@@ -28,11 +28,10 @@ class KseqppFullReader {
       SeqStreamIn iss(filename.c_str());
       while (iss >> record) {
         size_t seq_start = 0;
-        for (auto str_break: record.string_breaks) {
-          seqs.back().append(
-            record.seq.substr(seq_start, str_break - seq_start + 1)
+        for (auto str_break: record.chars_before_newline) {
+          seqs.back().append(record.seq.substr(seq_start, str_break - seq_start)
           );
-          seq_start = str_break + 1;
+          seq_start = str_break;
           if (seqs.back().size() > 0) { seqs.push_back(""); }
         }
         if (record.seq.size() - seq_start > 0) {
@@ -68,35 +67,35 @@ const string fastq_file = "test_objects/queries.fnq";
 
 const vector<Seq> small_expected = {
   { "1ACTGCAATGGGCAAT", {} },    { "ATGTCTCTGTGTGGAT", {} },
-  { "TAC23TCTAGCTACTA", { 3 } }, { "CTACTGATGGATGGAA", {} },
-  { "TGTGATG45TGAGTGA", { 7 } }, { "GATGAGGTGATAGTGA", {} },
-  { "CGTAGTGAGGA6", { 11 } },
+  { "TAC23TCTAGCTACTA", { 4 } }, { "CTACTGATGGATGGAA", {} },
+  { "TGTGATG45TGAGTGA", { 8 } }, { "GATGAGGTGATAGTGA", {} },
+  { "CGTAGTGAGGA6", { 12 } },
 };
 
 const vector<Seq> half_expected
-  = { { "1ACTGCAATGGGCAATAT", {} }, { "GTCTCTGTGTGGATTAC2", { 17 } },
-      { "3TCTAGCTACTACTACTG", {} }, { "ATGGATGGAATGTGATG4", { 17 } },
-      { "5TGAGTGAGATGAGGTGA", {} }, { "TAGTGACGTAGTGAGGA6", { 17 } } };
+  = { { "1ACTGCAATGGGCAATAT", {} }, { "GTCTCTGTGTGGATTAC2", { 18 } },
+      { "3TCTAGCTACTACTACTG", {} }, { "ATGGATGGAATGTGATG4", { 18 } },
+      { "5TGAGTGAGATGAGGTGA", {} }, { "TAGTGACGTAGTGAGGA6", { 18 } } };
 
 const vector<Seq> equal_expected
-  = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC2", { 35 } },
-      { "3TCTAGCTACTACTACTGATGGATGGAATGTGATG4", { 35 } },
-      { "5TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6", { 35 } } };
+  = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC2", { 36 } },
+      { "3TCTAGCTACTACTACTGATGGATGGAATGTGATG4", { 36 } },
+      { "5TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6", { 36 } } };
 
 const vector<Seq> big_expected
-  = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCT", { 35 } },
-      { "ACTACTACTGATGGATGGAATGTGATG45TGAGTGAGATGAGGT", { 27 } },
-      { "GATAGTGACGTAGTGAGGA6", { 19 } } };
+  = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCT", { 36 } },
+      { "ACTACTACTGATGGATGGAATGTGATG45TGAGTGAGATGAGGT", { 28 } },
+      { "GATAGTGACGTAGTGAGGA6", { 20 } } };
 
 const vector<Seq> common_multiple_expected
-  = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTG", { 35 } },
+  = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTG", { 36 } },
       { "ATGGATGGAATGTGATG45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
-        { 17, 53 } } };
+        { 18, 54 } } };
 
 const vector<Seq> full_expected
   = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTGATGGATGGAATGTGAT"
         "G45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
-        { 36 - 1, 36 * 2 - 1, 36 * 3 - 1 } } };
+        { 36, 36 * 2, 36 * 3 } } };
 
 TEST(TestFASTA, SmallBufferFASTA) {
   KseqppFullReader(fasta_file, 16).assert_correct();
@@ -139,7 +138,6 @@ TEST(TestFASTQ, HalfBufferFASTQ) {
   ASSERT_EQ(get_seqs(fastq_file, 18), half_expected);
 }
 
-
 TEST(TestFASTQ, EqualBufferFASTQ) {
   KseqppFullReader(fastq_file, 36).assert_correct();
   ASSERT_EQ(get_seqs(fastq_file, 36), equal_expected);
@@ -159,4 +157,16 @@ TEST(TestFASTQ, CommonMultipleBufferFASTQ) {
 TEST(TestFASTQ, BiggestBufferFASTQ) {
   KseqppFullReader(fastq_file, 9999).assert_correct();
   ASSERT_EQ(get_seqs(fastq_file, 9999), full_expected);
+}
+
+const vector<Seq> full_expected_empty_line
+  = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTGATGGATGGAATGTGAT"
+        "G45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
+        { 36, 36, 36 * 2, 36 * 3 } } };
+
+TEST(TestEmptyLine, TestEmptyLine) {
+  ASSERT_EQ(
+    get_seqs("test_objects/fasta_empty_line.fna", 9999),
+    full_expected_empty_line
+  );
 }

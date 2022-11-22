@@ -27,25 +27,26 @@ class Seq {  // kseq_t
 
     Seq(
       const string seq,
-      const vector<size_t> string_breaks,
+      const vector<size_t> chars_before_newline,
       size_t max_seq_size = 16 * 1024
     ) {
       this->seq = seq;
-      this->string_breaks = string_breaks;
+      this->chars_before_newline = chars_before_newline;
       this->max_seq_size = max_seq_size;
     }
 
     size_t max_seq_size;
-    vector<size_t> string_breaks;
+    vector<size_t> chars_before_newline;
     string seq;
 
     inline void clear() {
-      string_breaks.clear();
+      chars_before_newline.clear();
       seq.clear();
     }
 
     bool operator==(const Seq &other) const {
-      return seq == other.seq && string_breaks == other.string_breaks;
+      return seq == other.seq
+          && chars_before_newline == other.chars_before_newline;
     }
 };
 
@@ -176,8 +177,7 @@ class KStream {  // kstream_t
         if (this->finished_reading_seq) { this->read_header(); }
         if (this->fail() || this->eof()) { return *this; }
 
-        if (read_sequence(rec, c)) { break; }
-        if (this->eof()) { return *this; }
+        if (read_sequence(rec, c) || this->eof()) { return *this; }
 
         // Read + line if FASTQ
         if (c != '+') continue;  // FASTA if no +
@@ -189,13 +189,12 @@ class KStream {  // kstream_t
 
         if (this->eof()) { return *this; }
       }
-      return *this;
     }
 
     inline bool read_sequence(Seq &rec, char &last_char) {
       char c;
       size_t previous_length = rec.seq.size();
-      while (c = this->next_char ? next_char : this->getc()) {
+      while ((c = this->next_char ? next_char : this->getc())) {
         if (c == '\n' || c == '\r') {
           next_char = 0;
           continue;
@@ -220,7 +219,7 @@ class KStream {  // kstream_t
       this->finished_reading_seq = is_ready_char(c) || c == '+' || this->eof();
       last_char = c;
       if (this->finished_reading_seq) {
-        rec.string_breaks.push_back(rec.seq.size() - 1);
+        rec.chars_before_newline.push_back(rec.seq.size());
       }
       return false;
     }
