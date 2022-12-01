@@ -15,13 +15,13 @@
 ## Number of tasks per node.
 #SBATCH --ntasks-per-node=1
 ## Number of cpus per task.
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task=16
 ## Since this is a benchmarking script, we might not want it to share resources
-##SBATCH --exclusive
+#SBATCH --exclusive
 ## Amount of memory per node
-#SBATCH --mem-per-cpu=100G
+#SBATCH --mem-per-cpu=5G
 ## This partition on mahti has NVME
-#SBATCH --partition=gputest
+#SBATCH --partition=gpusmall
 ## We only want a single a100 gpu and 10GB of NVME storage
 #SBATCH --gres=gpu:a100:0,nvme:300
 

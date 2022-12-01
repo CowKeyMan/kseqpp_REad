@@ -23,9 +23,13 @@ const vector<string> expected = { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC2",
 class KseqppFullReader {
   public:
     vector<string> seqs = { "" };
-    KseqppFullReader(const string filename, const size_t bufsize) {
+    KseqppFullReader(
+      const string filename,
+      const size_t bufsize,
+      const size_t file_bufsize = DEFAULT_BUFSIZE
+    ) {
       Seq record(bufsize);
-      SeqStreamIn iss(filename.c_str());
+      SeqStreamIn iss(filename.c_str(), file_bufsize);
       while (iss >> record) {
         size_t seq_start = 0;
         for (auto str_break: record.chars_before_newline) {
@@ -51,7 +55,9 @@ class KseqppFullReader {
     }
 };
 
-vector<Seq> get_seqs(const string filename, const size_t bufsize) {
+vector<Seq> get_seqs(
+  const string filename, const size_t bufsize, const size_t file_bufsize=DEFAULT_BUFSIZE
+) {
   vector<Seq> ret;
   Seq record(bufsize);
   SeqStreamIn iss(filename.c_str());
@@ -164,9 +170,21 @@ const vector<Seq> full_expected_empty_line
         "G45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
         { 36, 36, 36 * 2, 36 * 3 } } };
 
-TEST(TestEmptyLine, TestEmptyLine) {
+TEST(TestEmptyLine, Test) {
+  KseqppFullReader("test_objects/fasta_empty_line.fna", 9999).assert_correct();
   ASSERT_EQ(
     get_seqs("test_objects/fasta_empty_line.fna", 9999),
     full_expected_empty_line
   );
+}
+
+TEST(TestFASTA, CommonMultipleBufferFASTASmallFileBuffer) {
+  // 36 * 1.5 = 54
+  KseqppFullReader(fasta_file, 36 * 1.5, 36).assert_correct();
+  ASSERT_EQ(get_seqs(fasta_file, 36 * 1.5, 36), common_multiple_expected);
+}
+
+TEST(TestFASTA, BiggestBufferFASTASmallFileBuffer) {
+  KseqppFullReader(fasta_file, 9999, 36).assert_correct();
+  ASSERT_EQ(get_seqs(fasta_file, 9999, 36), full_expected);
 }

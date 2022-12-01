@@ -50,7 +50,7 @@ class Seq {  // kseq_t
     }
 };
 
-constexpr static std::make_unsigned_t<size_t> DEFAULT_BUFSIZE = 16 * 1024;
+constexpr static size_t DEFAULT_BUFSIZE = 16 * 1024;
 
 template <typename TFile, typename TFunc>
 class KStream {  // kstream_t
@@ -84,12 +84,12 @@ class KStream {  // kstream_t
     KStream(
       TFile file_handle_,
       TFunc load_bufile_handle_,
-      std::make_unsigned_t<size_t> bs_ = DEFAULT_BUFSIZE,
+      size_t _bufsize = DEFAULT_BUFSIZE,
       close_type close_func_ = nullptr
     )  // ks_init
         :
-        buf(new char[bs_]),
-        bufsize(bs_),
+        buf(new char[_bufsize]),
+        bufsize(_bufsize),
         file_handle(std::move(file_handle_)),
         load_buf(std::move(load_bufile_handle_)),
         close_func(close_func_) {
@@ -157,7 +157,7 @@ class KStream {  // kstream_t
     }
     /* Methods */
     inline bool err() const {  // ks_err
-      return this->buf_end == -1;
+      return this->buf_end == size_t(-1);
     }
 
     inline bool eof() const {  // ks_eof
@@ -194,7 +194,7 @@ class KStream {  // kstream_t
     inline bool read_sequence(Seq &rec, char &last_char) {
       char c;
       size_t previous_length = rec.seq.size();
-      while ((c = this->next_char ? next_char : this->getc())) {
+      while ((c = this->next_char ? this->next_char : this->getc())) {
         if (c == '\n' || c == '\r') {
           next_char = 0;
           continue;
@@ -304,19 +304,20 @@ class KStream {  // kstream_t
       size_t i = ULLONG_MAX;
       char c = -1;
       do {
-        if (!(c = this->getc())) break;
+        if (!this->getc()) break;
         --this->buf_begin;
         i = this->get_idx_at_delim_or_bufend(delimiter, str, max_str_size);
         gotany = true;
         this->append_to_string(str, str_size, i - this->buf_begin);
         this->buf_begin = i + 1;
-        if (i > 0) { c = this->buf[i - 1]; }
+        if (i > 0) {
+          if (delimiter == SEP::LINE && this->buf[i - 1] == '\r') {
+            remove_last_element(str, str_size);
+          }
+        }
       } while (i >= this->buf_end);
       if (this->err() || (this->eof() && !gotany)) return false;
       if (!this->eof() && last_char != nullptr) *last_char = this->buf[i];
-      if (delimiter == SEP::LINE && c == '\r') {
-        remove_last_element(str, str_size);
-      }
       return true;
     }
 
@@ -355,9 +356,10 @@ class SeqStreamIn:
     using base_type
       = KStream<gzFile, int (*)(gzFile_s *, void *, unsigned int)>;
 
-    SeqStreamIn(const char *filename):
-        base_type(gzopen(filename, "r"), gzread, gzclose) {}
-    SeqStreamIn(int fd): base_type(gzdopen(fd, "r"), gzread, gzclose) {}
+    SeqStreamIn(const char *filename, const size_t bufsize = DEFAULT_BUFSIZE):
+        base_type(gzopen(filename, "r"), gzread, bufsize, gzclose) {}
+    SeqStreamIn(int fd, const size_t bufsize = DEFAULT_BUFSIZE):
+        base_type(gzdopen(fd, "r"), gzread, bufsize, gzclose) {}
 };
 
 }  // namespace reklibpp

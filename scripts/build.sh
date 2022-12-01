@@ -2,10 +2,26 @@
 
 mkdir -p build
 cd build
+# build compilation commands
+cmake \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DKSEQPP_READ_BUILD_TESTS=ON \
+  -DKSEQPP_READ_BUILD_BENCHMARKS=ON \
+  ..
+# build tests in debug mode
+cmake \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DKSEQPP_READ_BUILD_TESTS=ON \
+  -DKSEQPP_READ_BUILD_BENCHMARKS=OFF \
+  ..
+cmake --build . -j8
+# build benchmarks in release mode
 cmake \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
   -DCMAKE_BUILD_TYPE=Release \
-  -DKSEQPP_READ_BUILD_TESTS=ON \
+  -DKSEQPP_READ_BUILD_TESTS=OFF \
   -DKSEQPP_READ_BUILD_BENCHMARKS=ON \
   ..
 cmake --build . -j8
