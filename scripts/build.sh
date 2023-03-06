@@ -11,7 +11,7 @@ cmake \
   ..
 # build tests in debug mode
 cmake \
-  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF \
   -DCMAKE_BUILD_TYPE=Debug \
   -DKSEQPP_READ_BUILD_TESTS=ON \
   -DKSEQPP_READ_BUILD_BENCHMARKS=OFF \
@@ -19,7 +19,7 @@ cmake \
 cmake --build . -j8
 # build benchmarks in release mode
 cmake \
-  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF \
   -DCMAKE_BUILD_TYPE=Release \
   -DKSEQPP_READ_BUILD_TESTS=OFF \
   -DKSEQPP_READ_BUILD_BENCHMARKS=ON \
@@ -45,8 +45,8 @@ fi
 
 # Download Fastq
 FASTQ="FASTQ.fnq"
-## Source: https://www.ebi.ac.uk/ena/browser/view/SRX11174563?show=reads
-wget -nc "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR148/030/SRR14856430/SRR14856430_1.fastq.gz" -O "${FASTQ}.gz"
+## Source: https://www.ebi.ac.uk/ena/browser/view/PRJEB32631
+wget -nc "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR340/004/ERR3404624/ERR3404624_1.fastq.gz" -O "${FASTQ}.gz"
 if test -f "${FASTQ}"; then
   echo "${FASTQ} already unzipped, skipping "
 else
