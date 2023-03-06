@@ -5,27 +5,28 @@
 
 #include "kseqpp_read.hpp"
 
-using namespace reklibpp;
+namespace reklibpp {
 
 using std::max;
 using std::string;
 using std::vector;
 
-int main(int argc, char **argv) {
+auto main(int argc, char **argv) -> int {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
 
-const vector<string> expected = {
-  "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC2",
-  "3TCTAGCTACTACTACTGATGGATGGAATGTGATG4",
-  "5TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6"};
-
 class KseqppFullReader {
-public:
+private:
+  vector<string> expected = {
+    "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC2",
+    "3TCTAGCTACTACTACTGATGGATGGAATGTGATG4",
+    "5TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6"};
   vector<string> seqs = {""};
+
+public:
   KseqppFullReader(
-    const string filename,
+    const string &filename,
     const size_t bufsize,
     const size_t file_bufsize = DEFAULT_BUFSIZE
   ) {
@@ -52,13 +53,10 @@ public:
           record.seq.begin() + record.seq.size(),
           seqs.back().begin() + str_size
         );
-        /* seqs.back().append( */
-        /*   record.seq.substr(seq_start, record.seq.size() - seq_start) */
-        /* ); */
       }
       record.clear();
     }
-    if (seqs.back().size() == 0) { seqs.resize(seqs.size() - 1); }
+    if (seqs.back().empty()) { seqs.resize(seqs.size() - 1); }
   }
 
   void assert_correct() {
@@ -68,11 +66,11 @@ public:
   }
 };
 
-vector<Seq> get_seqs(
+auto get_seqs(
   const string filename,
   const size_t bufsize,
   const size_t file_bufsize = DEFAULT_BUFSIZE
-) {
+) -> vector<Seq> {
   vector<Seq> ret;
   Seq record(bufsize);
   SeqStreamIn iss(filename.c_str());
@@ -83,114 +81,110 @@ vector<Seq> get_seqs(
   return ret;
 }
 
-const string fasta_file = "test_objects/queries.fna";
-const string fastq_file = "test_objects/queries.fnq";
-
-const vector<Seq> small_expected = {
-  {"1ACTGCAATGGGCAAT", {}},
-  {"ATGTCTCTGTGTGGAT", {}},
-  {"TAC23TCTAGCTACTA", {4}},
-  {"CTACTGATGGATGGAA", {}},
-  {"TGTGATG45TGAGTGA", {8}},
-  {"GATGAGGTGATAGTGA", {}},
-  {"CGTAGTGAGGA6", {12}},
+class Test: public ::testing::Test {
+public:
+  string fasta_file = "test_objects/queries.fna";
+  string fastq_file = "test_objects/queries.fnq";
+  vector<Seq> small_expected = {
+    {"1ACTGCAATGGGCAAT", {}},
+    {"ATGTCTCTGTGTGGAT", {}},
+    {"TAC23TCTAGCTACTA", {4}},
+    {"CTACTGATGGATGGAA", {}},
+    {"TGTGATG45TGAGTGA", {8}},
+    {"GATGAGGTGATAGTGA", {}},
+    {"CGTAGTGAGGA6", {12}},
+  };
+  vector<Seq> half_expected = {
+    {"1ACTGCAATGGGCAATAT", {}},
+    {"GTCTCTGTGTGGATTAC2", {18}},
+    {"3TCTAGCTACTACTACTG", {}},
+    {"ATGGATGGAATGTGATG4", {18}},
+    {"5TGAGTGAGATGAGGTGA", {}},
+    {"TAGTGACGTAGTGAGGA6", {18}}};
+  vector<Seq> equal_expected = {
+    {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC2", {36}},
+    {"3TCTAGCTACTACTACTGATGGATGGAATGTGATG4", {36}},
+    {"5TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6", {36}}};
+  vector<Seq> big_expected = {
+    {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCT", {36}},
+    {"ACTACTACTGATGGATGGAATGTGATG45TGAGTGAGATGAGGT", {28}},
+    {"GATAGTGACGTAGTGAGGA6", {20}}};
+  vector<Seq> common_multiple_expected = {
+    {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTG", {36}},
+    {"ATGGATGGAATGTGATG45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6", {18, 54}}};
+  vector<Seq> full_expected = {
+    {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTGATGGATGGAATGTGAT"
+     "G45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
+     {36, 36ULL * 2, 36ULL * 3}}};
+  vector<Seq> full_expected_empty_line = {
+    {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTGATGGATGGAATGTGAT"
+     "G45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
+     {36, 36, 36ULL * 2, 36ULL * 3}}};
 };
 
-const vector<Seq> half_expected = {
-  {"1ACTGCAATGGGCAATAT", {}},
-  {"GTCTCTGTGTGGATTAC2", {18}},
-  {"3TCTAGCTACTACTACTG", {}},
-  {"ATGGATGGAATGTGATG4", {18}},
-  {"5TGAGTGAGATGAGGTGA", {}},
-  {"TAGTGACGTAGTGAGGA6", {18}}};
-
-const vector<Seq> equal_expected = {
-  {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC2", {36}},
-  {"3TCTAGCTACTACTACTGATGGATGGAATGTGATG4", {36}},
-  {"5TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6", {36}}};
-
-const vector<Seq> big_expected = {
-  {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCT", {36}},
-  {"ACTACTACTGATGGATGGAATGTGATG45TGAGTGAGATGAGGT", {28}},
-  {"GATAGTGACGTAGTGAGGA6", {20}}};
-
-const vector<Seq> common_multiple_expected = {
-  {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTG", {36}},
-  {"ATGGATGGAATGTGATG45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6", {18, 54}}};
-
-const vector<Seq> full_expected = {
-  {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTGATGGATGGAATGTGAT"
-   "G45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
-   {36, 36 * 2, 36 * 3}}};
-
-TEST(TestFASTA, SmallBufferFASTA) {
+TEST_F(Test, TestFASTASmallBufferFASTA) {
   KseqppFullReader(fasta_file, 16).assert_correct();
   ASSERT_EQ(get_seqs(fasta_file, 16), small_expected);
 }
 
-TEST(TestFASTA, HalfBufferFASTA) {
+TEST_F(Test, TestFASTAHalfBufferFASTA) {
   KseqppFullReader(fasta_file, 18).assert_correct();
   ASSERT_EQ(get_seqs(fasta_file, 18), half_expected);
 }
 
-TEST(TestFASTA, EqualBufferFASTA) {
+TEST_F(Test, TestFASTAEqualBufferFASTA) {
   KseqppFullReader(fasta_file, 36).assert_correct();
   ASSERT_EQ(get_seqs(fasta_file, 36), equal_expected);
 }
 
-TEST(TestFASTA, BigBufferFASTA) {
+TEST_F(Test, TestFASTABigBufferFASTA) {
   KseqppFullReader(fasta_file, 44).assert_correct();
   ASSERT_EQ(get_seqs(fasta_file, 44), big_expected);
 }
 
-TEST(TestFASTA, CommonMultipleBufferFASTA) {
+TEST_F(Test, TestFASTACommonMultipleBufferFASTA) {
   // 36 * 1.5 = 54
   KseqppFullReader(fasta_file, 36 * 1.5).assert_correct();
   ASSERT_EQ(get_seqs(fasta_file, 36 * 1.5), common_multiple_expected);
 }
 
-TEST(TestFASTA, BiggestBufferFASTA) {
+TEST_F(Test, TestFASTABiggestBufferFASTA) {
   KseqppFullReader(fasta_file, 9999).assert_correct();
   ASSERT_EQ(get_seqs(fasta_file, 9999), full_expected);
 }
 
-TEST(TestFASTQ, SmallBufferFASTQ) {
+TEST_F(Test, TestFASTQSmallBufferFASTQ) {
   KseqppFullReader(fastq_file, 16).assert_correct();
   ASSERT_EQ(get_seqs(fastq_file, 16), small_expected);
 }
 
-TEST(TestFASTQ, HalfBufferFASTQ) {
+TEST_F(Test, TestFASTQHalfBufferFASTQ) {
   KseqppFullReader(fastq_file, 18).assert_correct();
   ASSERT_EQ(get_seqs(fastq_file, 18), half_expected);
 }
 
-TEST(TestFASTQ, EqualBufferFASTQ) {
+TEST_F(Test, TestFASTQEqualBufferFASTQ) {
   KseqppFullReader(fastq_file, 36).assert_correct();
   ASSERT_EQ(get_seqs(fastq_file, 36), equal_expected);
 }
 
-TEST(TestFASTQ, BigBufferFASTQ) {
+TEST_F(Test, TestFASTQBigBufferFASTQ) {
   KseqppFullReader(fastq_file, 44).assert_correct();
   ASSERT_EQ(get_seqs(fastq_file, 44), big_expected);
 }
 
-TEST(TestFASTQ, CommonMultipleBufferFASTQ) {
+TEST_F(Test, TestFASTQCommonMultipleBufferFASTQ) {
   // 36 * 1.5 = 54
   KseqppFullReader(fastq_file, 36 * 1.5).assert_correct();
   ASSERT_EQ(get_seqs(fastq_file, 36 * 1.5), common_multiple_expected);
 }
 
-TEST(TestFASTQ, BiggestBufferFASTQ) {
+TEST_F(Test, TestFASTQBiggestBufferFASTQ) {
   KseqppFullReader(fastq_file, 9999).assert_correct();
   ASSERT_EQ(get_seqs(fastq_file, 9999), full_expected);
 }
 
-const vector<Seq> full_expected_empty_line = {
-  {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTGATGGATGGAATGTGAT"
-   "G45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
-   {36, 36, 36 * 2, 36 * 3}}};
-
-TEST(TestEmptyLine, Test) {
+TEST_F(Test, TestEmptyLineTest) {
   KseqppFullReader("test_objects/fasta_empty_line.fna", 9999).assert_correct();
   ASSERT_EQ(
     get_seqs("test_objects/fasta_empty_line.fna", 9999),
@@ -198,13 +192,15 @@ TEST(TestEmptyLine, Test) {
   );
 }
 
-TEST(TestFASTA, CommonMultipleBufferFASTASmallFileBuffer) {
+TEST_F(Test, TestFASTACommonMultipleBufferFASTASmallFileBuffer) {
   // 36 * 1.5 = 54
   KseqppFullReader(fasta_file, 36 * 1.5, 36).assert_correct();
   ASSERT_EQ(get_seqs(fasta_file, 36 * 1.5, 36), common_multiple_expected);
 }
 
-TEST(TestFASTA, BiggestBufferFASTASmallFileBuffer) {
+TEST_F(Test, TestFASTABiggestBufferFASTASmallFileBuffer) {
   KseqppFullReader(fasta_file, 9999, 36).assert_correct();
   ASSERT_EQ(get_seqs(fasta_file, 9999, 36), full_expected);
 }
+
+}  // namespace reklibpp

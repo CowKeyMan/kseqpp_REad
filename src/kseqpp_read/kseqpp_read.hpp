@@ -27,21 +27,22 @@ public:
 
   Seq(size_t max_chars_): max_chars(max_chars_) { seq.reserve(max_chars); }
   Seq(
-    const vector<char> seq_,
-    const vector<size_t> chars_before_new_read_,
+    vector<char> seq_,
+    vector<size_t> chars_before_new_read_,
     size_t max_chars_ = DEFAULT_BUFSIZE
   ):
       max_chars(max_chars_),
       seq(std::move(seq_)),
-      chars_before_new_read(chars_before_new_read_) {
+      chars_before_new_read(std::move(chars_before_new_read_)) {
     seq.reserve(max_chars);
   }
   Seq(
     const std::string &seq_,
-    const vector<size_t> chars_before_new_read_,
+    vector<size_t> chars_before_new_read_,
     size_t max_chars_ = DEFAULT_BUFSIZE
   ):
-      max_chars(max_chars_), chars_before_new_read(chars_before_new_read_) {
+      max_chars(max_chars_),
+      chars_before_new_read(std::move(chars_before_new_read_)) {
     seq.reserve(max_chars);
     seq.resize(seq_.size());
     std::copy(seq_.begin(), seq_.end(), seq.begin());
@@ -52,7 +53,7 @@ public:
     seq.clear();
   }
 
-  bool operator==(const Seq &other) const {
+  auto operator==(const Seq &other) const -> bool {
     return seq == other.seq
       && chars_before_new_read == other.chars_before_new_read;
   }
@@ -64,7 +65,7 @@ public:
   /* Typedefs */
   using close_type = int (*)(TFile);
 
-protected:
+private:
   /* Separators */
   enum class SEP {
     SPACE = 0,  // isspace(): \t, \n, \v, \f, \r
@@ -87,6 +88,7 @@ protected:
   TFunc load_buf;    /**< @brief read function */
   close_type close_func; /**< @brief close function */
 public:
+  // NOLINTNEXTLINE (cppcoreguidelines-pro-type-member-init,hicpp-member-init)
   KStream(
     TFile file_handle_,
     TFunc load_bufile_handle_,
@@ -109,6 +111,7 @@ public:
     this->next_char = 0;
   }
 
+  // NOLINTNEXTLINE (cppcoreguidelines-pro-type-member-init,hicpp-member-init)
   KStream(TFile file_handle_, TFunc load_buf_, close_type close_func_):
       KStream(
         std::move(file_handle_),
@@ -118,8 +121,9 @@ public:
       ) {}
 
   KStream(KStream const &) = delete;
-  KStream &operator=(KStream const &) = delete;
+  auto operator=(KStream const &) = delete;
 
+  // NOLINTNEXTLINE (cppcoreguidelines-pro-type-member-init,hicpp-member-init)
   KStream(KStream &&other) noexcept {
     this->buf = other.buf;
     other.buf = nullptr;
@@ -137,6 +141,7 @@ public:
     this->next_char = other.next_char;
   }
 
+  // NOLINTNEXTLINE (cppcoreguidelines-pro-type-member-init,hicpp-member-init)
   KStream &operator=(KStream &&other) noexcept {
     if (this == &other) { return *this; }
     delete[] this->buf;
@@ -162,21 +167,21 @@ public:
     if (this->close_func != nullptr) { this->close_func(this->file_handle); }
   }
   /* Methods */
-  inline bool err() const {  // ks_err
+  [[nodiscard]] inline auto err() const -> bool {  // ks_err
     return this->buf_end == size_t(-1);
   }
 
-  inline bool eof() const {  // ks_eof
+  [[nodiscard]] inline auto eof() const -> bool {  // ks_eof
     return this->is_eof && this->buf_begin >= this->buf_end;
   }
 
-  inline bool tqs() const { return this->is_tqs; }
+  [[nodiscard]] inline auto tqs() const -> bool { return this->is_tqs; }
 
-  inline bool fail() const {
+  [[nodiscard]] inline auto fail() const -> bool {
     return this->err() || this->tqs() || (this->eof() && !has_read_something);
   }
 
-  inline KStream &operator>>(Seq &rec) {
+  inline auto operator>>(Seq &rec) -> KStream & {
     char c = -1;
     this->has_read_something = false;
     while (true) {
@@ -199,28 +204,26 @@ public:
     }
   }
 
-  inline bool read_sequence(Seq &rec, char &last_char) {
-    char c;
+  inline auto read_sequence(Seq &rec, char &last_char) -> bool {
+    char c = 0;
     size_t previous_length = rec.seq.size();
     while ((c = this->next_char ? this->next_char : this->getc())) {
       if (c == '\n' || c == '\r') {
         next_char = 0;
         continue;
-      } else if (is_ready_char(c) || c == '+') {
-        break;
       }
+      if (is_ready_char(c) || c == '+') { break; }
       if (rec.seq.size() == rec.max_chars) {
         this->next_char = c;
         this->current_seq_size += rec.seq.size() - previous_length;
         return true;
-      } else {
-        rec.seq.push_back(c);
-        this->next_char = 0;
       }
+      rec.seq.push_back(c);
+      this->next_char = 0;
       this->getuntil(
         SEP::LINE, &rec.seq, &this->next_char, nullptr, rec.max_chars
       );
-      this->has_read_something = rec.seq.size() > 0;
+      this->has_read_something = !rec.seq.empty();
     }
     this->current_seq_size += rec.seq.size() - previous_length;
     this->first_header_char_read = is_ready_char(c);
@@ -232,8 +235,8 @@ public:
     return false;
   }
 
-  inline void read_header() {
-    char last_char;
+  inline auto read_header() -> void {
+    char last_char = 0;
     this->finished_reading_seq = false;
     if (!this->first_header_char_read) {
       this->read_until_next_ready_char();
@@ -245,27 +248,27 @@ public:
     this->current_seq_size = 0;
   }
 
-  inline void read_until_next_ready_char() {
-    char c;
+  inline auto read_until_next_ready_char() -> void {
+    char c = 0;
     while ((c = this->getc()) && !is_ready_char(c)) {}
   }
 
-  inline bool read_name(char &last_char) {
+  inline auto read_name(char &last_char) -> bool {
     return this->getuntil(SEP::SPACE, nullptr, &last_char);
   }
 
-  inline bool read_comment() {
+  inline auto read_comment() -> bool {
     return this->getuntil(SEP::LINE, nullptr, nullptr);
   }
 
-  inline bool is_ready_char(char c) { return c == '>' || c == '@'; }
+  inline auto is_ready_char(char c) -> bool { return c == '>' || c == '@'; }
 
-  inline void skip_to_next_line() {
-    char c;
+  inline auto skip_to_next_line() -> void {
+    char c = 0;
     while ((c = this->getc()) && c != '\n') {}
   }
 
-  inline void read_quality_string() {
+  inline auto read_quality_string() -> void {
     if (this->eof()) {  // no quality string
       this->is_tqs = true;
       return;
@@ -277,10 +280,10 @@ public:
     if (this->current_seq_size != qual_size) { this->is_tqs = true; }
   }
 
-  operator bool() const { return !this->fail(); }
+  explicit operator bool() const { return !this->fail(); }
 
   /* Low-level methods */
-  inline char getc() noexcept {
+  inline auto getc() noexcept -> char {
     if (this->err() || this->eof()) { return 0; }
     if (this->buf_begin >= this->buf_end) {
       this->fetch_buffer();
@@ -290,22 +293,22 @@ public:
     return this->buf[this->buf_begin++];
   }
 
-  inline void fetch_buffer() noexcept {
+  inline auto fetch_buffer() noexcept -> void {
     this->buf_begin = 0;
     this->buf_end = this->load_buf(this->file_handle, this->buf, this->bufsize);
   }
 
-  inline void check_eof() {
+  inline auto check_eof() -> void {
     if (this->buf_end <= 0) { this->is_eof = true; }
   }
 
-  inline bool getuntil(
+  inline auto getuntil(
     const SEP delimiter,
     vector<char> *str,
     char *last_char,
     size_t *str_size = nullptr,
     const size_t max_str_size = ULLONG_MAX
-  ) noexcept {
+  ) noexcept -> bool {
     bool gotany = false;
     if (last_char != nullptr) { *last_char = 0; }
     size_t i = ULLONG_MAX;
@@ -328,10 +331,10 @@ public:
     return true;
   }
 
-  inline size_t get_idx_at_delim_or_bufend(
+  inline auto get_idx_at_delim_or_bufend(
     SEP delimiter, vector<char> *str, const size_t max_str_size
-  ) {
-    size_t i;
+  ) -> size_t {
+    size_t i = -1;
     if (delimiter == SEP::LINE) {
       for (i = this->buf_begin; i < this->buf_end && this->buf[i] != '\n'
            && (str == nullptr
@@ -345,8 +348,9 @@ public:
     return i;
   }
 
-  inline void
-  append_to_string(vector<char> *str, size_t *str_size, const size_t amount) {
+  inline auto
+  append_to_string(vector<char> *str, size_t *str_size, const size_t amount)
+    -> void {
     if (str != nullptr) {
       const size_t str_size = str->size();
       str->resize(str_size + amount);
@@ -359,7 +363,7 @@ public:
     if (str_size != nullptr) { *str_size += amount; }
   }
 
-  inline void remove_last_element(vector<char> *str, size_t *str_size) {
+  inline auto remove_last_element(vector<char> *str, size_t *str_size) -> void {
     if (str != nullptr) { str->pop_back(); }
     if (str_size != nullptr) { *str_size -= 1; }
   }
@@ -370,9 +374,11 @@ class SeqStreamIn:
 public:
   using base_type = KStream<gzFile, int (*)(gzFile_s *, void *, unsigned int)>;
 
-  SeqStreamIn(const char *filename, const size_t bufsize = DEFAULT_BUFSIZE):
+  explicit SeqStreamIn(
+    const char *filename, const size_t bufsize = DEFAULT_BUFSIZE
+  ):
       base_type(gzopen(filename, "r"), gzread, bufsize, gzclose) {}
-  SeqStreamIn(int fd, const size_t bufsize = DEFAULT_BUFSIZE):
+  explicit SeqStreamIn(int fd, const size_t bufsize = DEFAULT_BUFSIZE):
       base_type(gzdopen(fd, "r"), gzread, bufsize, gzclose) {}
 };
 
