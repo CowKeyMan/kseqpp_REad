@@ -55,33 +55,33 @@ To run the benchmarks, it is recommended to download this repository and run `./
 Unfortunately, as a result to make it more scalable, more checks need to be made and thus performance takes a small hit when compared to the original kseqpp. This was one benchmark which was made using the AMD Rome 7H12 CPU and a 3.8TB NVME drive.
 
 ```
-klibpp fasta iteration 1: 3060ms
-klibpp fasta iteration 2: 2950ms
-klibpp fasta iteration 3: 2943ms
-klibpp fasta iteration 4: 2945ms
-klibpp fasta iteration 5: 2949ms
-Average: 2969.4ms
+reklibpp fasta iteration 1: 3186ms
+reklibpp fasta iteration 2: 3062ms
+reklibpp fasta iteration 3: 3057ms
+reklibpp fasta iteration 4: 3055ms
+reklibpp fasta iteration 5: 3056ms
+Average: 3083.2ms
 
-klibpp fastq iteration 1: 6939ms
-klibpp fastq iteration 2: 6664ms
-klibpp fastq iteration 3: 6651ms
-klibpp fastq iteration 4: 6650ms
-klibpp fastq iteration 5: 6657ms
-Average: 6712.2ms
+reklibpp fastq iteration 1: 4389ms
+reklibpp fastq iteration 2: 4285ms
+reklibpp fastq iteration 3: 4298ms
+reklibpp fastq iteration 4: 4282ms
+reklibpp fastq iteration 5: 4243ms
+Average: 4299.4ms
 
-reklibpp fasta iteration 1: 3887ms
-reklibpp fasta iteration 2: 3884ms
-reklibpp fasta iteration 3: 3885ms
-reklibpp fasta iteration 4: 3903ms
-reklibpp fasta iteration 5: 3886ms
-Average: 3889ms
+klibpp fasta iteration 1: 2324ms
+klibpp fasta iteration 2: 2340ms
+klibpp fasta iteration 3: 2340ms
+klibpp fasta iteration 4: 2336ms
+klibpp fasta iteration 5: 2339ms
+Average: 2335.8ms
 
-reklibpp fastq iteration 1: 7269ms
-reklibpp fastq iteration 2: 7261ms
-reklibpp fastq iteration 3: 7270ms
-reklibpp fastq iteration 4: 7246ms
-reklibpp fastq iteration 5: 7254ms
-Average: 7260ms
+klibpp fastq iteration 1: 3567ms
+klibpp fastq iteration 2: 3542ms
+klibpp fastq iteration 3: 3539ms
+klibpp fastq iteration 4: 3536ms
+klibpp fastq iteration 5: 3537ms
+Average: 3544.2ms
 ```
 
 The advantage of this implementation is that the strings read will be sequential in memory, which means that it can easily be transferred to the gpu, or parallelised in some form or another. Processing in general becomes easier.
