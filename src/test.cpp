@@ -16,47 +16,62 @@ int main(int argc, char **argv) {
   return RUN_ALL_TESTS();
 }
 
-const vector<string> expected = { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC2",
-                                  "3TCTAGCTACTACTACTGATGGATGGAATGTGATG4",
-                                  "5TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6" };
+const vector<string> expected = {
+  "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC2",
+  "3TCTAGCTACTACTACTGATGGATGGAATGTGATG4",
+  "5TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6"};
 
 class KseqppFullReader {
-  public:
-    vector<string> seqs = { "" };
-    KseqppFullReader(
-      const string filename,
-      const size_t bufsize,
-      const size_t file_bufsize = DEFAULT_BUFSIZE
-    ) {
-      Seq record(bufsize);
-      SeqStreamIn iss(filename.c_str(), file_bufsize);
-      while (iss >> record) {
-        size_t seq_start = 0;
-        for (auto str_break: record.chars_before_newline) {
-          seqs.back().append(record.seq.substr(seq_start, str_break - seq_start)
-          );
-          seq_start = str_break;
-          if (seqs.back().size() > 0) { seqs.push_back(""); }
-        }
-        if (record.seq.size() - seq_start > 0) {
-          seqs.back().append(
-            record.seq.substr(seq_start, record.seq.size() - seq_start)
-          );
-        }
-        record.clear();
+public:
+  vector<string> seqs = {""};
+  KseqppFullReader(
+    const string filename,
+    const size_t bufsize,
+    const size_t file_bufsize = DEFAULT_BUFSIZE
+  ) {
+    Seq record(bufsize);
+    SeqStreamIn iss(filename.c_str(), file_bufsize);
+    while (iss >> record) {
+      size_t seq_start = 0;
+      for (auto str_break : record.chars_before_new_read) {
+        const auto str_size = seqs.back().size();
+        seqs.back().resize(str_size + str_break - seq_start);
+        std::copy(
+          record.seq.begin() + seq_start,
+          record.seq.begin() + str_break,
+          seqs.back().begin() + str_size
+        );
+        seq_start = str_break;
+        if (seqs.back().size() > 0) { seqs.push_back(""); }
       }
-      if (seqs.back().size() == 0) { seqs.resize(seqs.size() - 1); }
+      if (record.seq.size() - seq_start > 0) {
+        const auto str_size = seqs.back().size();
+        seqs.back().resize(str_size + record.seq.size() - seq_start);
+        std::copy(
+          record.seq.begin() + seq_start,
+          record.seq.begin() + record.seq.size(),
+          seqs.back().begin() + str_size
+        );
+        /* seqs.back().append( */
+        /*   record.seq.substr(seq_start, record.seq.size() - seq_start) */
+        /* ); */
+      }
+      record.clear();
     }
+    if (seqs.back().size() == 0) { seqs.resize(seqs.size() - 1); }
+  }
 
-    void assert_correct() {
-      for (size_t i = 0; i < max(seqs.size(), expected.size()); ++i) {
-        ASSERT_EQ(seqs[i], expected[i]);
-      }
+  void assert_correct() {
+    for (size_t i = 0; i < max(seqs.size(), expected.size()); ++i) {
+      ASSERT_EQ(seqs[i], expected[i]);
     }
+  }
 };
 
 vector<Seq> get_seqs(
-  const string filename, const size_t bufsize, const size_t file_bufsize=DEFAULT_BUFSIZE
+  const string filename,
+  const size_t bufsize,
+  const size_t file_bufsize = DEFAULT_BUFSIZE
 ) {
   vector<Seq> ret;
   Seq record(bufsize);
@@ -72,36 +87,41 @@ const string fasta_file = "test_objects/queries.fna";
 const string fastq_file = "test_objects/queries.fnq";
 
 const vector<Seq> small_expected = {
-  { "1ACTGCAATGGGCAAT", {} },    { "ATGTCTCTGTGTGGAT", {} },
-  { "TAC23TCTAGCTACTA", { 4 } }, { "CTACTGATGGATGGAA", {} },
-  { "TGTGATG45TGAGTGA", { 8 } }, { "GATGAGGTGATAGTGA", {} },
-  { "CGTAGTGAGGA6", { 12 } },
+  {"1ACTGCAATGGGCAAT", {}},
+  {"ATGTCTCTGTGTGGAT", {}},
+  {"TAC23TCTAGCTACTA", {4}},
+  {"CTACTGATGGATGGAA", {}},
+  {"TGTGATG45TGAGTGA", {8}},
+  {"GATGAGGTGATAGTGA", {}},
+  {"CGTAGTGAGGA6", {12}},
 };
 
-const vector<Seq> half_expected
-  = { { "1ACTGCAATGGGCAATAT", {} }, { "GTCTCTGTGTGGATTAC2", { 18 } },
-      { "3TCTAGCTACTACTACTG", {} }, { "ATGGATGGAATGTGATG4", { 18 } },
-      { "5TGAGTGAGATGAGGTGA", {} }, { "TAGTGACGTAGTGAGGA6", { 18 } } };
+const vector<Seq> half_expected = {
+  {"1ACTGCAATGGGCAATAT", {}},
+  {"GTCTCTGTGTGGATTAC2", {18}},
+  {"3TCTAGCTACTACTACTG", {}},
+  {"ATGGATGGAATGTGATG4", {18}},
+  {"5TGAGTGAGATGAGGTGA", {}},
+  {"TAGTGACGTAGTGAGGA6", {18}}};
 
-const vector<Seq> equal_expected
-  = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC2", { 36 } },
-      { "3TCTAGCTACTACTACTGATGGATGGAATGTGATG4", { 36 } },
-      { "5TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6", { 36 } } };
+const vector<Seq> equal_expected = {
+  {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC2", {36}},
+  {"3TCTAGCTACTACTACTGATGGATGGAATGTGATG4", {36}},
+  {"5TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6", {36}}};
 
-const vector<Seq> big_expected
-  = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCT", { 36 } },
-      { "ACTACTACTGATGGATGGAATGTGATG45TGAGTGAGATGAGGT", { 28 } },
-      { "GATAGTGACGTAGTGAGGA6", { 20 } } };
+const vector<Seq> big_expected = {
+  {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCT", {36}},
+  {"ACTACTACTGATGGATGGAATGTGATG45TGAGTGAGATGAGGT", {28}},
+  {"GATAGTGACGTAGTGAGGA6", {20}}};
 
-const vector<Seq> common_multiple_expected
-  = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTG", { 36 } },
-      { "ATGGATGGAATGTGATG45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
-        { 18, 54 } } };
+const vector<Seq> common_multiple_expected = {
+  {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTG", {36}},
+  {"ATGGATGGAATGTGATG45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6", {18, 54}}};
 
-const vector<Seq> full_expected
-  = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTGATGGATGGAATGTGAT"
-        "G45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
-        { 36, 36 * 2, 36 * 3 } } };
+const vector<Seq> full_expected = {
+  {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTGATGGATGGAATGTGAT"
+   "G45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
+   {36, 36 * 2, 36 * 3}}};
 
 TEST(TestFASTA, SmallBufferFASTA) {
   KseqppFullReader(fasta_file, 16).assert_correct();
@@ -165,10 +185,10 @@ TEST(TestFASTQ, BiggestBufferFASTQ) {
   ASSERT_EQ(get_seqs(fastq_file, 9999), full_expected);
 }
 
-const vector<Seq> full_expected_empty_line
-  = { { "1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTGATGGATGGAATGTGAT"
-        "G45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
-        { 36, 36, 36 * 2, 36 * 3 } } };
+const vector<Seq> full_expected_empty_line = {
+  {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTGATGGATGGAATGTGAT"
+   "G45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
+   {36, 36, 36 * 2, 36 * 3}}};
 
 TEST(TestEmptyLine, Test) {
   KseqppFullReader("test_objects/fasta_empty_line.fna", 9999).assert_correct();
