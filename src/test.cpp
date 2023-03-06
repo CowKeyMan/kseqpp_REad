@@ -27,10 +27,11 @@ private:
 public:
   KseqppFullReader(
     const string &filename,
-    const size_t bufsize,
+    const size_t max_chars,
+    const size_t max_reads = DEFAULT_BUFSIZE / 100,
     const size_t file_bufsize = DEFAULT_BUFSIZE
   ) {
-    Seq record(bufsize);
+    Seq record(max_chars, max_reads);
     SeqStreamIn iss(filename.c_str(), file_bufsize);
     while (iss >> record) {
       size_t seq_start = 0;
@@ -43,7 +44,7 @@ public:
           seqs.back().begin() + str_size
         );
         seq_start = str_break;
-        if (seqs.back().size() > 0) { seqs.push_back(""); }
+        if (!seqs.back().empty()) { seqs.emplace_back(""); }
       }
       if (record.seq.size() - seq_start > 0) {
         const auto str_size = seqs.back().size();
@@ -67,13 +68,14 @@ public:
 };
 
 auto get_seqs(
-  const string filename,
-  const size_t bufsize,
+  const string &filename,
+  const size_t max_chars,
+  const size_t max_reads = DEFAULT_BUFSIZE / 100,
   const size_t file_bufsize = DEFAULT_BUFSIZE
 ) -> vector<Seq> {
   vector<Seq> ret;
-  Seq record(bufsize);
-  SeqStreamIn iss(filename.c_str());
+  Seq record(max_chars, max_reads);
+  SeqStreamIn iss(filename.c_str(), file_bufsize);
   while (iss >> record) {
     ret.push_back(record);
     record.clear();
@@ -120,6 +122,10 @@ public:
     {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTGATGGATGGAATGTGAT"
      "G45TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6",
      {36, 36, 36ULL * 2, 36ULL * 3}}};
+  vector<Seq> double_expected = {
+    {"1ACTGCAATGGGCAATATGTCTCTGTGTGGATTAC23TCTAGCTACTACTACTGATGGATGGAATGTGATG4",
+     {36, 72}},
+    {"5TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6", {36}}};
 };
 
 TEST_F(Test, TestFASTASmallBufferFASTA) {
@@ -194,13 +200,23 @@ TEST_F(Test, TestEmptyLineTest) {
 
 TEST_F(Test, TestFASTACommonMultipleBufferFASTASmallFileBuffer) {
   // 36 * 1.5 = 54
-  KseqppFullReader(fasta_file, 36 * 1.5, 36).assert_correct();
-  ASSERT_EQ(get_seqs(fasta_file, 36 * 1.5, 36), common_multiple_expected);
+  KseqppFullReader(fasta_file, 36 * 1.5, 999, 36).assert_correct();
+  ASSERT_EQ(get_seqs(fasta_file, 36 * 1.5, 999, 36), common_multiple_expected);
 }
 
 TEST_F(Test, TestFASTABiggestBufferFASTASmallFileBuffer) {
-  KseqppFullReader(fasta_file, 9999, 36).assert_correct();
-  ASSERT_EQ(get_seqs(fasta_file, 9999, 36), full_expected);
+  KseqppFullReader(fasta_file, 9999, 999, 36).assert_correct();
+  ASSERT_EQ(get_seqs(fasta_file, 9999, 999, 36), full_expected);
+}
+
+TEST_F(Test, TestLimitedMaxReads) {
+  KseqppFullReader(fasta_file, 9999, 1).assert_correct();
+  ASSERT_EQ(get_seqs(fasta_file, 9999, 1), equal_expected);
+}
+
+TEST_F(Test, TestLimitedMaxReadsDouble) {
+  KseqppFullReader(fasta_file, 9999, 2).assert_correct();
+  ASSERT_EQ(get_seqs(fasta_file, 9999, 2), double_expected);
 }
 
 }  // namespace reklibpp

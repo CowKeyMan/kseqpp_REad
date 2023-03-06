@@ -22,27 +22,39 @@ const size_t DEFAULT_BUFSIZE = 16ULL * 1024;
 class Seq {  // kseq_t
 public:
   size_t max_chars;
+  size_t max_reads;
   vector<size_t> chars_before_new_read;
   vector<char> seq;
 
-  Seq(size_t max_chars_): max_chars(max_chars_) { seq.reserve(max_chars); }
+  explicit Seq(
+    size_t max_chars_ = DEFAULT_BUFSIZE,
+    size_t max_reads_ = DEFAULT_BUFSIZE / 100
+  ):
+      max_chars(max_chars_), max_reads(max_reads_) {
+    seq.reserve(max_chars);
+    chars_before_new_read.reserve(max_reads);
+  }
   Seq(
     vector<char> seq_,
     vector<size_t> chars_before_new_read_,
-    size_t max_chars_ = DEFAULT_BUFSIZE
+    size_t max_chars_ = DEFAULT_BUFSIZE,
+    size_t max_reads_ = DEFAULT_BUFSIZE / 100
   ):
       max_chars(max_chars_),
       seq(std::move(seq_)),
-      chars_before_new_read(std::move(chars_before_new_read_)) {
+      chars_before_new_read(std::move(chars_before_new_read_)),
+      max_reads(max_reads_) {
     seq.reserve(max_chars);
   }
   Seq(
     const std::string &seq_,
     vector<size_t> chars_before_new_read_,
-    size_t max_chars_ = DEFAULT_BUFSIZE
+    size_t max_chars_ = DEFAULT_BUFSIZE,
+    size_t max_reads_ = DEFAULT_BUFSIZE / 100
   ):
       max_chars(max_chars_),
-      chars_before_new_read(std::move(chars_before_new_read_)) {
+      chars_before_new_read(std::move(chars_before_new_read_)),
+      max_reads(max_reads_) {
     seq.reserve(max_chars);
     seq.resize(seq_.size());
     std::copy(seq_.begin(), seq_.end(), seq.begin());
@@ -168,7 +180,7 @@ public:
   }
   /* Methods */
   [[nodiscard]] inline auto err() const -> bool {  // ks_err
-    return this->buf_end == size_t(-1);
+    return this->buf_end == static_cast<size_t>(-1);
   }
 
   [[nodiscard]] inline auto eof() const -> bool {  // ks_eof
@@ -188,7 +200,9 @@ public:
       if (this->finished_reading_seq) { this->read_header(); }
       if (this->fail() || this->eof()) { return *this; }
 
-      if (read_sequence(rec, c) || this->eof()) { return *this; }
+      if (read_sequence(rec, c) || this->eof() || rec.chars_before_new_read.size() == rec.max_reads) {
+        return *this;
+      }
 
       // Read + line if FASTQ
       if (c != '+') {
