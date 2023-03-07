@@ -1,9 +1,36 @@
 project(reklibpp)
 
-find_package(ZLIB)
+option(KSEQPP_READ_BUILD_STATIC "Build static libs. Off by default" OFF)
+
+set(STATIC_FLAGS "")
+if(KSEQPP_READ_BUILD_STATIC)
+  set(STATIC_FLAGS "-static")
+else()
+  set(STATIC_FLAGS "")
+endif()
+
+include(FetchContent)
+FetchContent_Declare(
+  zlib
+  QUIET
+  GIT_REPOSITORY       https://github.com/madler/zlib
+  GIT_TAG              v1.2.13
+  GIT_SHALLOW          TRUE
+)
+message(${zlib_BINARY_DIR})
+add_library(ZLIB STATIC IMPORTED)
+if(KSEQPP_READ_BUILD_STATIC)
+  set_target_properties(ZLIB PROPERTIES IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/lib/libz.a")
+else()
+  set_target_properties(ZLIB PROPERTIES IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/lib/libz.so")
+endif()
+target_include_directories(ZLIB PUBLIC ${ZLIB_SOURCE_DIR} ${ZLIB_BINARY_DIR})
+FetchContent_MakeAvailable(zlib)
+
+
 add_library(kseqpp_read INTERFACE)
 target_include_directories(kseqpp_read INTERFACE ${PROJECT_SOURCE_DIR}/kseqpp_read)
-target_link_libraries(kseqpp_read INTERFACE ZLIB::ZLIB)
+target_link_libraries(kseqpp_read INTERFACE ZLIB)
 
 # Builds the testing program. We use googletest as a testing framework
 option(KSEQPP_READ_BUILD_TESTS "Build the benchmarks" OFF)
@@ -31,7 +58,7 @@ if (KSEQPP_READ_BUILD_TESTS)
     test
     "${PROJECT_SOURCE_DIR}/test.cpp"
   )
-  target_link_libraries(test kseqpp_read test_lib)
+  target_link_libraries(test kseqpp_read test_lib ${STATIC_FLAGS})
   add_test(NAME test COMMAND test)
 endif() # BUILD_TESTS
 
@@ -62,5 +89,5 @@ if (KSEQPP_READ_BUILD_BENCHMARKS)
   if(NOT KSEQPP_FOUND)
     add_dependencies(benchmark kseqpp)
   endif()
-  target_link_libraries(benchmark kseqpp_read)
+  target_link_libraries(benchmark kseqpp_read ${STATIC_FLAGS})
 endif()
