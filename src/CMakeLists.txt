@@ -2,13 +2,6 @@ project(reklibpp)
 
 option(KSEQPP_READ_BUILD_STATIC "Build static libs. Off by default" OFF)
 
-set(STATIC_FLAGS "")
-if(KSEQPP_READ_BUILD_STATIC)
-  set(STATIC_FLAGS "-static")
-else()
-  set(STATIC_FLAGS "")
-endif()
-
 include(FetchContent)
 FetchContent_Declare(
   zlib
@@ -58,7 +51,7 @@ if (KSEQPP_READ_BUILD_TESTS)
     test
     "${PROJECT_SOURCE_DIR}/test.cpp"
   )
-  target_link_libraries(test kseqpp_read test_lib ${STATIC_FLAGS})
+  target_link_libraries(test kseqpp_read test_lib)
   add_test(NAME test COMMAND test)
 endif() # BUILD_TESTS
 
