@@ -10,7 +10,6 @@ FetchContent_Declare(
   GIT_TAG              v1.2.13
   GIT_SHALLOW          TRUE
 )
-message(${zlib_BINARY_DIR})
 add_library(ZLIB STATIC IMPORTED)
 if(KSEQPP_READ_BUILD_STATIC)
   set_target_properties(ZLIB PROPERTIES IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/lib/libz.a")
