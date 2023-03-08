@@ -28,7 +28,7 @@
 ## Remove unnecessary modules
 module purge
 ## Load in modules
-module load cmake gcc bzip2
+module load cmake gcc bzip2 git
 
 ## We want to perform our work in LOCAL SCRATCh
 export OLD_PWD="${PWD}"
