@@ -6,10 +6,10 @@
 #SBATCH --account=dongelr1
 ## Maximum time
 #SBATCH --time=00:15:00
-## put stderr to benchmark_err.txt
-#SBATCH --error benchmark_err.txt
-## put stdout to benchmark_out.txt
-#SBATCH --output benchmark_out.txt
+## put stderr to err.txt
+#SBATCH --error err.txt
+## put stdout to out.txt
+#SBATCH --output out.txt
 ## We only need a single node
 #SBATCH --nodes 1
 ## Number of tasks per node.
