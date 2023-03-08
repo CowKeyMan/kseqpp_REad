@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.19)
 
 project(
   "SBWT Search"
-  VERSION 0.0.1
+  VERSION 1.4.0
   DESCRIPTION "A rewrite of kseqpp to only read sequences, and only read until a certain amount of characters, making it more scalable"
   HOMEPAGE_URL https://github.com/CowKeyMan/kseqpp_REad
   LANGUAGES CXX
