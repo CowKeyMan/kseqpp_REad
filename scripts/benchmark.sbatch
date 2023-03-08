@@ -19,9 +19,9 @@
 ## Since this is a benchmarking script, we might not want it to share resources
 #SBATCH --exclusive
 ## Amount of memory per node
-#SBATCH --mem-per-cpu=5G
+#SBATCH --mem-per-cpu=3G
 ## This partition on mahti has NVME
-#SBATCH --partition=gpusmall
+#SBATCH --partition=gputest
 ## We only want a single a100 gpu and 10GB of NVME storage
 #SBATCH --gres=gpu:a100:0,nvme:300
 
