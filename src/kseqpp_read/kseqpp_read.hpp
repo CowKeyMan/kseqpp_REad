@@ -132,47 +132,10 @@ public:
         close_func_
       ) {}
 
-  KStream(KStream const &) = delete;
-  auto operator=(KStream const &) = delete;
-
-  // NOLINTNEXTLINE (cppcoreguidelines-pro-type-member-init,hicpp-member-init)
-  KStream(KStream &&other) noexcept {
-    this->buf = other.buf;
-    other.buf = nullptr;
-    this->bufsize = other.bufsize;
-    this->buf_begin = other.buf_begin;
-    this->buf_end = other.buf_end;
-    this->is_eof = other.is_eof;
-    this->is_tqs = other.is_tqs;
-    this->first_header_char_read = other.first_header_char_read;
-    this->file_handle = std::move(other.file_handle);
-    this->load_buf = std::move(other.load_buf);
-    this->close_func = other.close_func;
-    this->finished_reading_seq = other.finished_reading_seq;
-    this->current_seq_size = other.current_seq_size;
-    this->next_char = other.next_char;
-  }
-
-  // NOLINTNEXTLINE (cppcoreguidelines-pro-type-member-init,hicpp-member-init)
-  KStream &operator=(KStream &&other) noexcept {
-    if (this == &other) { return *this; }
-    delete[] this->buf;
-    this->buf = other.buf;
-    other.buf = nullptr;
-    this->bufsize = other.bufsize;
-    this->buf_begin = other.buf_begin;
-    this->buf_end = other.buf_end;
-    this->is_eof = other.is_eof;
-    this->is_tqs = other.is_tqs;
-    this->first_header_char_read = other.first_header_char_read;
-    this->file_handle = std::move(other.file_handle);
-    this->load_buf = std::move(other.load_buf);
-    this->close_func = other.close_func;
-    this->finished_reading_seq = other.finished_reading_seq;
-    this->current_seq_size = other.current_seq_size;
-    this->next_char = other.next_char;
-    return *this;
-  }
+  KStream(KStream &) = delete;
+  KStream(KStream &&other) = delete;
+  auto operator=(KStream &) = delete;
+  auto operator=(KStream &&) = delete;
 
   ~KStream() noexcept {
     delete[] this->buf;
