@@ -62,7 +62,7 @@ public:
 
   void assert_correct() {
     for (size_t i = 0; i < max(seqs.size(), expected.size()); ++i) {
-      ASSERT_EQ(seqs[i], expected[i]);
+      ASSERT_EQ(seqs[i], expected[i]) << "differs at index " << i;
     }
   }
 };
@@ -128,71 +128,80 @@ public:
     {"5TGAGTGAGATGAGGTGATAGTGACGTAGTGAGGA6", {36}}};
 };
 
+auto assert_seqs_equal(const vector<Seq> &seqs1, const vector<Seq> &seqs2)
+  -> void {
+  for (size_t i = 0; i < seqs1.size(); ++i) {
+    EXPECT_EQ(seqs1[i].chars_before_new_read, seqs2[i].chars_before_new_read)
+      << "differs at index " << i;
+    EXPECT_EQ(seqs1[i].seq, seqs2[i].seq) << "differs at index " << i;
+  }
+}
+
 TEST_F(Test, TestFASTASmallBufferFASTA) {
   KseqppFullReader(fasta_file, 16).assert_correct();
-  ASSERT_EQ(get_seqs(fasta_file, 16), small_expected);
+  assert_seqs_equal(get_seqs(fasta_file, 16), small_expected);
 }
 
 TEST_F(Test, TestFASTAHalfBufferFASTA) {
   KseqppFullReader(fasta_file, 18).assert_correct();
-  ASSERT_EQ(get_seqs(fasta_file, 18), half_expected);
+  assert_seqs_equal(get_seqs(fasta_file, 18), half_expected);
 }
 
 TEST_F(Test, TestFASTAEqualBufferFASTA) {
   KseqppFullReader(fasta_file, 36).assert_correct();
-  ASSERT_EQ(get_seqs(fasta_file, 36), equal_expected);
+  assert_seqs_equal(get_seqs(fasta_file, 36), equal_expected);
 }
 
 TEST_F(Test, TestFASTABigBufferFASTA) {
   KseqppFullReader(fasta_file, 44).assert_correct();
-  ASSERT_EQ(get_seqs(fasta_file, 44), big_expected);
+  assert_seqs_equal(get_seqs(fasta_file, 44), big_expected);
 }
 
 TEST_F(Test, TestFASTACommonMultipleBufferFASTA) {
   // 36 * 1.5 = 54
   KseqppFullReader(fasta_file, 36 * 1.5).assert_correct();
-  ASSERT_EQ(get_seqs(fasta_file, 36 * 1.5), common_multiple_expected);
+  assert_seqs_equal(get_seqs(fasta_file, 36 * 1.5), common_multiple_expected);
 }
 
 TEST_F(Test, TestFASTABiggestBufferFASTA) {
   KseqppFullReader(fasta_file, 9999).assert_correct();
-  ASSERT_EQ(get_seqs(fasta_file, 9999), full_expected);
+  assert_seqs_equal(get_seqs(fasta_file, 9999), full_expected);
 }
 
 TEST_F(Test, TestFASTQSmallBufferFASTQ) {
   KseqppFullReader(fastq_file, 16).assert_correct();
-  ASSERT_EQ(get_seqs(fastq_file, 16), small_expected);
+  assert_seqs_equal(get_seqs(fastq_file, 16), small_expected);
 }
 
 TEST_F(Test, TestFASTQHalfBufferFASTQ) {
   KseqppFullReader(fastq_file, 18).assert_correct();
-  ASSERT_EQ(get_seqs(fastq_file, 18), half_expected);
+  assert_seqs_equal(get_seqs(fastq_file, 18), half_expected);
 }
 
 TEST_F(Test, TestFASTQEqualBufferFASTQ) {
   KseqppFullReader(fastq_file, 36).assert_correct();
-  ASSERT_EQ(get_seqs(fastq_file, 36), equal_expected);
+  assert_seqs_equal(get_seqs(fastq_file, 36), equal_expected);
 }
 
 TEST_F(Test, TestFASTQBigBufferFASTQ) {
   KseqppFullReader(fastq_file, 44).assert_correct();
-  ASSERT_EQ(get_seqs(fastq_file, 44), big_expected);
+  assert_seqs_equal(get_seqs(fastq_file, 44), big_expected);
 }
 
 TEST_F(Test, TestFASTQCommonMultipleBufferFASTQ) {
   // 36 * 1.5 = 54
   KseqppFullReader(fastq_file, 36 * 1.5).assert_correct();
-  ASSERT_EQ(get_seqs(fastq_file, 36 * 1.5), common_multiple_expected);
+  assert_seqs_equal(get_seqs(fastq_file, 36 * 1.5), common_multiple_expected);
 }
 
 TEST_F(Test, TestFASTQBiggestBufferFASTQ) {
   KseqppFullReader(fastq_file, 9999).assert_correct();
-  ASSERT_EQ(get_seqs(fastq_file, 9999), full_expected);
+  assert_seqs_equal(get_seqs(fastq_file, 9999), full_expected);
 }
 
 TEST_F(Test, TestEmptyLineTest) {
   KseqppFullReader("test_objects/fasta_empty_line.fna", 9999).assert_correct();
-  ASSERT_EQ(
+  assert_seqs_equal(
     get_seqs("test_objects/fasta_empty_line.fna", 9999),
     full_expected_empty_line
   );
@@ -201,22 +210,24 @@ TEST_F(Test, TestEmptyLineTest) {
 TEST_F(Test, TestFASTACommonMultipleBufferFASTASmallFileBuffer) {
   // 36 * 1.5 = 54
   KseqppFullReader(fasta_file, 36 * 1.5, 999, 36).assert_correct();
-  ASSERT_EQ(get_seqs(fasta_file, 36 * 1.5, 999, 36), common_multiple_expected);
+  assert_seqs_equal(
+    get_seqs(fasta_file, 36 * 1.5, 999, 36), common_multiple_expected
+  );
 }
 
 TEST_F(Test, TestFASTABiggestBufferFASTASmallFileBuffer) {
   KseqppFullReader(fasta_file, 9999, 999, 36).assert_correct();
-  ASSERT_EQ(get_seqs(fasta_file, 9999, 999, 36), full_expected);
+  assert_seqs_equal(get_seqs(fasta_file, 9999, 999, 36), full_expected);
 }
 
 TEST_F(Test, TestLimitedMaxReads) {
   KseqppFullReader(fasta_file, 9999, 1).assert_correct();
-  ASSERT_EQ(get_seqs(fasta_file, 9999, 1), equal_expected);
+  assert_seqs_equal(get_seqs(fasta_file, 9999, 1), equal_expected);
 }
 
 TEST_F(Test, TestLimitedMaxReadsDouble) {
   KseqppFullReader(fasta_file, 9999, 2).assert_correct();
-  ASSERT_EQ(get_seqs(fasta_file, 9999, 2), double_expected);
+  assert_seqs_equal(get_seqs(fasta_file, 9999, 2), double_expected);
 }
 
 }  // namespace reklibpp
