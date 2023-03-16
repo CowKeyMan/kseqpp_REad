@@ -6,6 +6,7 @@ include(FetchContent)
 FetchContent_Declare(
   zlib
   QUIET
+  SYSTEM
   GIT_REPOSITORY       https://github.com/madler/zlib
   GIT_TAG              v1.2.13
   GIT_SHALLOW          TRUE
