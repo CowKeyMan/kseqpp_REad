@@ -236,10 +236,9 @@ public:
 
   inline auto read_n_chars(size_t n) -> void {
     char c = 0;
-    for (size_t i = 0; (c = getc()) && i < n; ++i) {
+    for (size_t i = 0;  i < n && (c = getc()); ++i) {
       while (c == '\r' || c == '\n') { c = getc(); }
     }
-    skip_to_next_line();
   }
 
   inline auto get_next_char() -> char {
