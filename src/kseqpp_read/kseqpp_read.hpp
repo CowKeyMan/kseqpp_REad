@@ -87,12 +87,12 @@ private:
   Seq *rec;
   char *buf;
   size_t bufsize;
-  size_t buf_begin;
-  size_t buf_end;
-  size_t current_seq_size;
-  bool eof;
-  bool finished_reading_seq;
-  char next_char;
+  size_t buf_begin = 0;
+  size_t buf_end = 0;
+  size_t current_seq_size = 0;
+  bool eof = false;
+  bool finished_reading_seq = true;
+  char next_char = 0;
   size_t qual_size;
   TFile file_handle;
   TFunc load_buf;
@@ -111,14 +111,7 @@ public:
       bufsize(_bufsize),
       file_handle(std::move(file_handle_)),
       load_buf(std::move(load_bufile_handle_)),
-      close_func(close_func_) {
-    this->buf_begin = 0;
-    this->buf_end = 0;
-    this->eof = false;
-    this->finished_reading_seq = true;
-    this->current_seq_size = true;
-    this->next_char = 0;
-  }
+      close_func(close_func_) {}
 
   // NOLINTNEXTLINE (cppcoreguidelines-pro-type-member-init,hicpp-member-init)
   KStream(TFile file_handle_, TFunc load_buf_, close_type close_func_):
@@ -143,73 +136,77 @@ public:
     rec = &rec_;
     size_t initial_rec_size
       = rec->seq.size() + rec->chars_before_new_read.size();
-    while (!this->eof) {
-      go_to_next_char();
-      if (this->eof) { break; }
+    while (
+      !(this->eof || this->rec->seq.size() == rec->max_chars
+        || this->rec->chars_before_new_read.size() == rec->max_reads)
+    ) {
       // skip header
       if (this->finished_reading_seq) {
         this->current_seq_size = 0;
-        read_header();
+        this->finished_reading_seq = false;
+        skip_to_next_line();
       }
 
-      if (this->eof) { break; }
+      // populate read
       read_read();
-      if (this->eof) { break; }
+      peek_next_char();
       if (!this->finished_reading_seq) { return true; }
-      read_quality_string();
-      if (
-        this->rec->seq.size() == rec->max_chars
-        || this->rec->chars_before_new_read.size() == rec->max_reads
-        || this->eof
-      ) {
-        break;
-      }
+      if (this->eof) { break; }
     }
     return rec->seq.size() + rec->chars_before_new_read.size()
       > initial_rec_size;
   }
 
-  inline auto read_header() {
-    go_to_next_char();
-    skip_to_next_line();
-  }
-
   inline auto read_read() -> void {
-    this->finished_reading_seq = false;
     char c = 0;
-    while (true) {
-      go_to_next_char();
-      c = getc();
+    // for each line
+    while (rec->seq.size() != rec->max_chars) {
+      // check if this lines starts with a shit character
+      c = peek_next_char();
       if (this->eof || c == '+' || c == '>' || c == '@') {
-        --buf_begin;
         rec->chars_before_new_read.push_back(rec->seq.size());
         this->finished_reading_seq = true;
         return;
       }
-      rec->seq.push_back(c);
-      ++this->current_seq_size;
-      if (rec->seq.size() == rec->max_chars) {
-        c = getc();
-        while (c == '\r' || c == '\n') { c = getc(); }
-        if (this->eof || c == '+' || c == '>' || c == '@') {
-          rec->chars_before_new_read.push_back(rec->seq.size());
-          this->finished_reading_seq = true;
+
+      fill_read();
+      // 3 stopping conditions: buf_end, eof, max_chars, newline
+      c = peek_next_char();
+      if (c == '\r' || c == '\n') {
+        skip_to_next_line();
+        c = peek_next_char();
+      }
+
+      if (this->eof || c == '+' || c == '@' || c == '>') {
+        if (c == '+') {
+          skip_to_next_line();
+          read_quality_string();
         }
-        --buf_begin;
-        return;
+        rec->chars_before_new_read.push_back(rec->seq.size());
+        this->finished_reading_seq = true;
+        break;
       }
     }
   }
 
-  inline auto read_quality_string() {
-    char c = getc();
-    if (c == '+') {
-      skip_to_next_line();
-      read_n_chars(this->current_seq_size);
-    } else {
-      --buf_begin;
+  inline auto fill_read() {
+    size_t seq_start = rec->seq.size();
+    size_t seq_size = seq_start;
+    size_t start = buf_begin;
+    char c = 0;
+    // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    while (this->buf_begin < buf_end && buf[this->buf_begin] != '\r'
+           && buf[this->buf_begin] != '\n' && seq_size < rec->max_chars) {
+      ++this->buf_begin;
+      ++seq_size;
     }
+    rec->seq.resize(rec->seq.size() + this->buf_begin - start);
+    // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    std::copy(buf + start, buf + this->buf_begin, rec->seq.data() + seq_start);
+    this->current_seq_size += this->buf_begin - start;
   }
+
+  inline auto read_quality_string() { read_n_chars(this->current_seq_size); }
 
   /* Low-level methods */
   inline auto getc() noexcept -> char {
@@ -221,12 +218,19 @@ public:
     return this->buf[this->buf_begin++];
   }
 
+  inline auto peek_next_char() noexcept -> char {
+    char c = getc();
+    --buf_begin;
+    return c;
+  }
+
   inline auto fetch_buffer() noexcept -> void {
     this->buf_begin = 0;
     this->buf_end = this->load_buf(this->file_handle, this->buf, this->bufsize);
   }
 
   inline auto skip_to_next_line() -> void {
+    // stop once you find a newline, next getc() will be the next char
     while (!this->eof && getc() != '\n') {}
   }
 
@@ -235,12 +239,13 @@ public:
     for (size_t i = 0; (c = getc()) && i < n; ++i) {
       while (c == '\r' || c == '\n') { c = getc(); }
     }
+    skip_to_next_line();
   }
 
-  inline auto go_to_next_char() -> void {
+  inline auto get_next_char() -> char {
     char c = 0;
     while ((c = getc()) && (c == '\r' || c == '\n')) {}
-    --buf_begin;
+    return c;
   }
 };
 
