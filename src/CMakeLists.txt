@@ -18,12 +18,13 @@ else()
   set_target_properties(ZLIB PROPERTIES IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/lib/libz.so")
 endif()
 target_include_directories(ZLIB PUBLIC ${ZLIB_SOURCE_DIR} ${ZLIB_BINARY_DIR})
+set(ZLIB_BUILD_EXAMPLES OFF)
 FetchContent_MakeAvailable(zlib)
-
 
 add_library(kseqpp_read INTERFACE)
 target_include_directories(kseqpp_read INTERFACE ${PROJECT_SOURCE_DIR}/kseqpp_read)
 target_link_libraries(kseqpp_read INTERFACE ZLIB)
+add_dependencies(kseqpp_read zlib)
 
 # Builds the testing program. We use googletest as a testing framework
 option(KSEQPP_READ_BUILD_TESTS "Build the benchmarks" OFF)
