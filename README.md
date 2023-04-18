@@ -55,57 +55,64 @@ To run the benchmarks, it is recommended to download this repository and run `./
 Unfortunately, as a result to make it more scalable, more checks need to be made and thus performance takes a small hit when compared to the original kseqpp. This was one benchmark which was made using the AMD Rome 7H12 CPU and a 3.8TB NVME drive.
 
 ```
-reklibpp fasta iteration 1: 4409ms
-reklibpp fasta iteration 2: 4279ms
-reklibpp fasta iteration 3: 4271ms
-reklibpp fasta iteration 4: 4271ms
-reklibpp fasta iteration 5: 4271ms
-Average: 4300.2ms
+reklibpp fasta iteration 1: 4257ms
+reklibpp fasta iteration 2: 4134ms
+reklibpp fasta iteration 3: 4126ms
+reklibpp fasta iteration 4: 4127ms
+reklibpp fasta iteration 5: 4137ms
+Average: 4156.2ms
 
-reklibpp fastq iteration 1: 4286ms
-reklibpp fastq iteration 2: 4178ms
-reklibpp fastq iteration 3: 4194ms
-reklibpp fastq iteration 4: 4183ms
-reklibpp fastq iteration 5: 4181ms
-Average: 4204.4ms
+reklibpp fastq iteration 1: 4247ms
+reklibpp fastq iteration 2: 4110ms
+reklibpp fastq iteration 3: 4096ms
+reklibpp fastq iteration 4: 4097ms
+reklibpp fastq iteration 5: 4097ms
+Average: 4129.4ms
 
-klibpp fasta iteration 1: 2350ms
-klibpp fasta iteration 2: 2309ms
-klibpp fasta iteration 3: 2311ms
-klibpp fasta iteration 4: 2311ms
-klibpp fasta iteration 5: 2349ms
-Average: 2326ms
+klibpp fasta iteration 1: 2343ms
+klibpp fasta iteration 2: 2271ms
+klibpp fasta iteration 3: 2264ms
+klibpp fasta iteration 4: 2272ms
+klibpp fasta iteration 5: 2304ms
+Average: 2290.8ms
 
-klibpp fastq iteration 1: 3800ms
-klibpp fastq iteration 2: 3785ms
-klibpp fastq iteration 3: 3763ms
-klibpp fastq iteration 4: 3794ms
-klibpp fastq iteration 5: 3885ms
-Average: 3805.4ms
+klibpp fastq iteration 1: 3723ms
+klibpp fastq iteration 2: 3724ms
+klibpp fastq iteration 3: 3680ms
+klibpp fastq iteration 4: 3667ms
+klibpp fastq iteration 5: 3661ms
+Average: 3691ms
 
-reklibpp fasta.gz iteration 1: 15368ms
-reklibpp fasta.gz iteration 2: 15298ms
-reklibpp fasta.gz iteration 3: 15288ms
-reklibpp fasta.gz iteration 4: 15287ms
-reklibpp fasta.gz iteration 5: 15293ms
-Average: 15306.8ms
+reklibpp fasta.gz iteration 1: 15287ms
+reklibpp fasta.gz iteration 2: 15238ms
+reklibpp fasta.gz iteration 3: 15216ms
+reklibpp fasta.gz iteration 4: 15265ms
+reklibpp fasta.gz iteration 5: 15185ms
+Average: 15238.2ms
 
-reklibpp fastq.gz iteration 1: 15636ms
-reklibpp fastq.gz iteration 2: 15189ms
-reklibpp fastq.gz iteration 3: 15188ms
-reklibpp fastq.gz iteration 4: 15189ms
-reklibpp fastq.gz iteration 5: 15194ms
-Average: 15279.2ms
+reklibpp fastq.gz iteration 1: 15734ms
+reklibpp fastq.gz iteration 2: 15672ms
+reklibpp fastq.gz iteration 3: 15660ms
+reklibpp fastq.gz iteration 4: 15692ms
+reklibpp fastq.gz iteration 5: 15675ms
+Average: 15686.6ms
 
-klibpp fasta.gz iteration 1: 13444ms
-klibpp fasta.gz iteration 2: 13413ms
-klibpp fasta.gz iteration 3: 13383ms
-klibpp fasta.gz iteration 4: 13367ms
-klibpp fasta.gz iteration 5: 13343ms
-Average: 13390ms
+klibpp fasta.gz iteration 1: 13538ms
+klibpp fasta.gz iteration 2: 13541ms
+klibpp fasta.gz iteration 3: 13551ms
+klibpp fasta.gz iteration 4: 13564ms
+klibpp fasta.gz iteration 5: 13547ms
+Average: 13548.2ms
+
+klibpp fastq.gz iteration 1: 15314ms
+klibpp fastq.gz iteration 2: 15307ms
+klibpp fastq.gz iteration 3: 15301ms
+klibpp fastq.gz iteration 4: 15258ms
+klibpp fastq.gz iteration 5: 15247ms
+Average: 15285.4ms
 ```
 
-The advantage of this implementation is that the strings read will be sequential in memory, which means that it can easily be transferred to the gpu, or parallelised in some form or another. Processing in general becomes easier.
+The advantage of this implementation is that the characters of the strings read will be sequential in memory, which means that it can easily be transferred to the gpu, or parallelised in some form or another. Processing in general becomes easier.
 
 ## Test
 
