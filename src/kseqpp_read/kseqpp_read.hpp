@@ -22,52 +22,52 @@ const size_t DEFAULT_BUFSIZE = 16ULL * 1024;
 class Seq {  // kseq_t
 public:
   size_t max_chars;
-  size_t max_reads;
-  vector<size_t> chars_before_new_read;
-  vector<char> seq;
+  size_t max_seqs;
+  vector<size_t> chars_before_new_seq;
+  vector<char> seqs;
 
   explicit Seq(
     size_t max_chars_ = DEFAULT_BUFSIZE,
-    size_t max_reads_ = DEFAULT_BUFSIZE / 100
+    size_t max_seqs_ = DEFAULT_BUFSIZE / 100
   ):
-      max_chars(max_chars_), max_reads(max_reads_) {
-    seq.reserve(max_chars);
-    chars_before_new_read.reserve(max_reads);
+      max_chars(max_chars_), max_seqs(max_seqs_) {
+    seqs.reserve(max_chars);
+    chars_before_new_seq.reserve(max_seqs);
   }
   Seq(
     vector<char> seq_,
-    vector<size_t> chars_before_new_read_,
+    vector<size_t> chars_before_new_seq_,
     size_t max_chars_ = DEFAULT_BUFSIZE,
-    size_t max_reads_ = DEFAULT_BUFSIZE / 100
+    size_t max_seqs_ = DEFAULT_BUFSIZE / 100
   ):
       max_chars(max_chars_),
-      seq(std::move(seq_)),
-      chars_before_new_read(std::move(chars_before_new_read_)),
-      max_reads(max_reads_) {
-    seq.reserve(max_chars);
+      seqs(std::move(seq_)),
+      chars_before_new_seq(std::move(chars_before_new_seq_)),
+      max_seqs(max_seqs_) {
+    seqs.reserve(max_chars);
   }
   Seq(
     const std::string &seq_,
-    vector<size_t> chars_before_new_read_,
+    vector<size_t> chars_before_new_seq_,
     size_t max_chars_ = DEFAULT_BUFSIZE,
-    size_t max_reads_ = DEFAULT_BUFSIZE / 100
+    size_t max_seqs_ = DEFAULT_BUFSIZE / 100
   ):
       max_chars(max_chars_),
-      chars_before_new_read(std::move(chars_before_new_read_)),
-      max_reads(max_reads_) {
-    seq.reserve(max_chars);
-    seq.resize(seq_.size());
-    std::copy(seq_.begin(), seq_.end(), seq.begin());
+      chars_before_new_seq(std::move(chars_before_new_seq_)),
+      max_seqs(max_seqs) {
+    seqs.reserve(max_chars);
+    seqs.resize(seq_.size());
+    std::copy(seq_.begin(), seq_.end(), seqs.begin());
   }
 
   inline void clear() {
-    chars_before_new_read.clear();
-    seq.clear();
+    chars_before_new_seq.clear();
+    seqs.clear();
   }
 
   auto operator==(const Seq &other) const -> bool {
-    return seq == other.seq
-      && chars_before_new_read == other.chars_before_new_read;
+    return seqs == other.seqs
+      && chars_before_new_seq == other.chars_before_new_seq;
   }
 };
 
@@ -135,10 +135,10 @@ public:
   inline auto operator>>(Seq &rec_) -> bool {
     rec = &rec_;
     size_t initial_rec_size
-      = rec->seq.size() + rec->chars_before_new_read.size();
+      = rec->seqs.size() + rec->chars_before_new_seq.size();
     while (
-      !(this->eof || this->rec->seq.size() == rec->max_chars
-        || this->rec->chars_before_new_read.size() == rec->max_reads)
+      !(this->eof || this->rec->seqs.size() == rec->max_chars
+        || this->rec->chars_before_new_seq.size() == rec->max_seqs)
     ) {
       // skip header
       if (this->finished_reading_seq) {
@@ -147,29 +147,29 @@ public:
         skip_to_next_line();
       }
 
-      // populate read
-      read_read();
+      // populate seq
+      read_seq();
       peek_next_char();
       if (!this->finished_reading_seq) { return true; }
       if (this->eof) { break; }
     }
-    return rec->seq.size() + rec->chars_before_new_read.size()
+    return rec->seqs.size() + rec->chars_before_new_seq.size()
       > initial_rec_size;
   }
 
-  inline auto read_read() -> void {
+  inline auto read_seq() -> void {
     char c = 0;
     // for each line
-    while (rec->seq.size() != rec->max_chars) {
+    while (rec->seqs.size() != rec->max_chars) {
       // check if this lines starts with a shit character
       c = peek_next_char();
       if (this->eof || c == '+' || c == '>' || c == '@') {
-        rec->chars_before_new_read.push_back(rec->seq.size());
+        rec->chars_before_new_seq.push_back(rec->seqs.size());
         this->finished_reading_seq = true;
         return;
       }
 
-      fill_read();
+      fill_seq();
       // 3 stopping conditions: buf_end, eof, max_chars, newline
       c = peek_next_char();
       if (c == '\r' || c == '\n') {
@@ -182,15 +182,15 @@ public:
           skip_to_next_line();
           read_quality_string();
         }
-        rec->chars_before_new_read.push_back(rec->seq.size());
+        rec->chars_before_new_seq.push_back(rec->seqs.size());
         this->finished_reading_seq = true;
         break;
       }
     }
   }
 
-  inline auto fill_read() {
-    size_t seq_start = rec->seq.size();
+  inline auto fill_seq() {
+    size_t seq_start = rec->seqs.size();
     size_t seq_size = seq_start;
     size_t start = buf_begin;
     char c = 0;
@@ -200,9 +200,9 @@ public:
       ++this->buf_begin;
       ++seq_size;
     }
-    rec->seq.resize(rec->seq.size() + this->buf_begin - start);
+    rec->seqs.resize(rec->seqs.size() + this->buf_begin - start);
     // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    std::copy(buf + start, buf + this->buf_begin, rec->seq.data() + seq_start);
+    std::copy(buf + start, buf + this->buf_begin, rec->seqs.data() + seq_start);
     this->current_seq_size += this->buf_begin - start;
   }
 
@@ -236,7 +236,7 @@ public:
 
   inline auto read_n_chars(size_t n) -> void {
     char c = 0;
-    for (size_t i = 0;  i < n && (c = getc()); ++i) {
+    for (size_t i = 0; i < n && (c = getc()); ++i) {
       while (c == '\r' || c == '\n') { c = getc(); }
     }
     skip_to_next_line();

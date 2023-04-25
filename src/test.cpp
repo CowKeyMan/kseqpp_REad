@@ -28,30 +28,30 @@ public:
   KseqppFullReader(
     const string &filename,
     const size_t max_chars,
-    const size_t max_reads = DEFAULT_BUFSIZE / 100,
+    const size_t max_seqs = DEFAULT_BUFSIZE / 100,
     const size_t file_bufsize = DEFAULT_BUFSIZE
   ) {
-    Seq record(max_chars, max_reads);
+    Seq record(max_chars, max_seqs);
     SeqStreamIn iss(filename.c_str(), file_bufsize);
     while (iss >> record) {
       size_t seq_start = 0;
-      for (auto str_break : record.chars_before_new_read) {
+      for (auto str_break : record.chars_before_new_seq) {
         const auto str_size = seqs.back().size();
         seqs.back().resize(str_size + str_break - seq_start);
         std::copy(
-          record.seq.begin() + seq_start,
-          record.seq.begin() + str_break,
+          record.seqs.begin() + seq_start,
+          record.seqs.begin() + str_break,
           seqs.back().begin() + str_size
         );
         seq_start = str_break;
         if (!seqs.back().empty()) { seqs.emplace_back(""); }
       }
-      if (record.seq.size() - seq_start > 0) {
+      if (record.seqs.size() - seq_start > 0) {
         const auto str_size = seqs.back().size();
-        seqs.back().resize(str_size + record.seq.size() - seq_start);
+        seqs.back().resize(str_size + record.seqs.size() - seq_start);
         std::copy(
-          record.seq.begin() + seq_start,
-          record.seq.begin() + record.seq.size(),
+          record.seqs.begin() + seq_start,
+          record.seqs.begin() + record.seqs.size(),
           seqs.back().begin() + str_size
         );
       }
@@ -70,11 +70,11 @@ public:
 auto get_seqs(
   const string &filename,
   const size_t max_chars,
-  const size_t max_reads = DEFAULT_BUFSIZE / 100,
+  const size_t max_seqs = DEFAULT_BUFSIZE / 100,
   const size_t file_bufsize = DEFAULT_BUFSIZE
 ) -> vector<Seq> {
   vector<Seq> ret;
-  Seq record(max_chars, max_reads);
+  Seq record(max_chars, max_seqs);
   SeqStreamIn iss(filename.c_str(), file_bufsize);
   while (iss >> record) {
     ret.push_back(record);
@@ -131,9 +131,9 @@ public:
 auto assert_seqs_equal(const vector<Seq> &seqs1, const vector<Seq> &seqs2)
   -> void {
   for (size_t i = 0; i < seqs1.size(); ++i) {
-    EXPECT_EQ(seqs1[i].chars_before_new_read, seqs2[i].chars_before_new_read)
+    EXPECT_EQ(seqs1[i].chars_before_new_seq, seqs2[i].chars_before_new_seq)
       << "differs at index " << i;
-    EXPECT_EQ(seqs1[i].seq, seqs2[i].seq) << "differs at index " << i;
+    EXPECT_EQ(seqs1[i].seqs, seqs2[i].seqs) << "differs at index " << i;
   }
 }
 
